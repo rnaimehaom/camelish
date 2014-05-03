@@ -1,0 +1,54 @@
+group = 'im.camelish'
+description = 'Camel tools for life sciences'
+
+apply plugin: 'idea'
+
+//project.ext.set('camelVersion' : '2.13.0')
+camelVersion = "2.13.0"
+sourceCompatibility = 1.6
+version = '0.1'
+def foobar = 'baz'
+    
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'groovy'
+
+    repositories {
+        mavenCentral()
+        maven {
+            credentials {
+                username "tdudgeon"
+                password "tdudgeon"
+            }
+            url "https://repository.chemaxon.com/artifactory/libs-release"
+        }
+    }
+
+    dependencies {
+        
+        groovy "org.codehaus.groovy:groovy-all:2.2.2"
+
+        compile "org.apache.camel:camel-core:$camelVersion"
+        compile "org.apache.camel:camel-groovy:$camelVersion"
+        compile "org.slf4j:slf4j-simple:1.7.7"
+        compile "org.apache.derby:derby:10.10.1.1"
+
+        testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
+    }
+}
+
+dependencies {
+    compile project(':core')
+    compile project(':bioassay')
+    compile project(':chemaxon')
+    testCompile project(':core-test')
+}
+
+task groovyVersion << {
+    println "Groovy version is ${GroovySystem.version}"
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.11'
+    jarFile = 'wrapper/wrapper.jar'
+}

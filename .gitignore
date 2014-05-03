@@ -1,0 +1,10 @@
+*~
+.gradle
+/build
+/out
+derby.log
+/*.iml
+/*.ipr
+/*.iws
+.nb-gradle
+

@@ -1,0 +1,10 @@
+group = 'im.camelish.bioassay'
+description = 'Camelish BioAssay extensions'
+
+dependencies {
+
+    project(':core')
+
+    testCompile project(':core-test')
+
+}

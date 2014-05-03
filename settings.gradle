@@ -1,0 +1,2 @@
+rootProject.name = 'camelish'
+include 'core', 'core-test', 'bioassay', 'chemaxon'
