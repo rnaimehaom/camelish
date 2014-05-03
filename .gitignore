@@ -7,4 +7,5 @@ derby.log
 /*.ipr
 /*.iws
 .nb-gradle
+**/build/
 
