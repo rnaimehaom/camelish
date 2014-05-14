@@ -2,11 +2,15 @@ package com.im.bioassay.doseresponse;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Created by timbo on 19/04/2014.
  */
 public class DoseResponseFitter {
+    
+    private static final Logger LOG = Logger.getLogger(DoseResponseFitter.class.getName());
 
     IC50CurveFitter fitter = new IC50CurveFitter();
 
@@ -38,5 +42,6 @@ public class DoseResponseFitter {
 
         IC50 ic50 = fitter.calcBestIC50(x, y);
         result.setIC50(ic50);
+        LOG.log(Level.FINE, "Fit was {0}", ic50.getConc());
     }
 }

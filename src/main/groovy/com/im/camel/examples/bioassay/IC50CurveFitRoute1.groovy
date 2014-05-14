@@ -15,6 +15,7 @@ camelContext.addRoutes(new RouteBuilder() {
                     .aggregationStrategy(new DoseResponseResultAggregationStrategy())
                     .log('Processing record ${property.CamelSplitIndex}')
                     .bean(DoseResponseFitter.class, "fit")
+                    .log('Procesed record ${property.CamelSplitIndex}')
                 .end()
                 .log("Fitting complete")
                 .bean(DoseResponseUtils.class, "fromDoseResponseDataset")
@@ -23,5 +24,6 @@ camelContext.addRoutes(new RouteBuilder() {
     }
 })
 camelContext.start()
-sleep(20000)
+sleep(10000)
+camelContext.shutdownStrategy.timeout = 10
 camelContext.stop()

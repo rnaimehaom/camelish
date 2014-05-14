@@ -13,18 +13,48 @@ class DoseResponseUtilsSpecification extends Specification {
         DoseResponseResult converted = DoseResponseUtils.toDoseResponseResult(
                 '''
 id = test1
-x=1, 10, 100, 1000, 10000, 100000
-y=5, 9, 25, 70, 90, 95
+x=1 10 100 1000 10000 100000
+y=5 9 25 70 90 95
 ''')
         converted instanceof DoseResponseResult
         converted.getXValues().size() == 6
         converted.getYValues().size() == 1
         converted.getYValues().getAt(0).size() == 6
         converted.id == 'test1'
-
     }
 
+    def "Convert multiple spaces"() {
 
+        expect:
+        DoseResponseResult converted = DoseResponseUtils.toDoseResponseResult(
+                '''
+id = test2
+x=1 10  100 1000 10000      100000
+y=5 9 25  70 90   95
+''')
+        converted instanceof DoseResponseResult
+        converted.getXValues().size() == 6
+        converted.getYValues().size() == 1
+        converted.getYValues().getAt(0).size() == 6
+        converted.id == 'test2'
+    }
+
+    def "Convert tabs"() {
+
+        expect:
+        DoseResponseResult converted = DoseResponseUtils.toDoseResponseResult(
+                '''
+id = test3
+x=1 10  100 1000 10000      100000
+y=5 9   25    70    90  95
+''')
+        converted instanceof DoseResponseResult
+        converted.getXValues().size() == 6
+        converted.getYValues().size() == 1
+        converted.getYValues().getAt(0).size() == 6
+        converted.id == 'test3'
+    }
+    
     def "Read multiple records"() {
 
         setup:
@@ -41,20 +71,20 @@ y=5, 9, 25, 70, 90, 95
         where:
         lines << [
                 '''
-x=1, 10, 100, 1000, 10000, 100000
-y=5, 9, 25, 70, 90, 95
+x=1 10 100 1000 10000 100000
+y=5 9 25 70 90 95
 ''' , '''
-x=1, 10, 100, 1000, 10000, 100000
-y=5, 9, 25, 70, 90, 95
+x=1 10 100 1000 10000 100000
+y=5 9 25 70 90 95
 #END
-x=1, 10, 100, 1000, 10000, 100000
-y=5, 9, 25, 70, 90, 95
+x=1 10 100 1000 10000 100000
+y=5 9 25 70 90 95
 ''' , '''
-x=1, 10, 100, 1000, 10000, 100000
-y=5, 9, 25, 70, 90, 95
+x=1 10 100 1000 10000 100000
+y=5 9 25 70 90 95
 #END
-x=1, 10, 100, 1000, 10000, 100000
-y=5, 9, 25, 70, 90, 95
+x=1 10 100 1000 10000 100000
+y=5 9 25 70 90 95
 #END
 '''
         ]

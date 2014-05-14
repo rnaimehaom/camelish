@@ -39,12 +39,12 @@ import java.util.logging.Logger;
  * reduced in an effort to converge on the correct value.
  * <p/>
  * To stop, the algorithm checks the following conditions:
- * concentrationDeviation < CONC_THRESHOLD)
- * sumOfSquaresDeviation < 0.001
- * CONC_INCREASE < CONC_THRESHOLD
+ * concentrationDeviation &lt; CONC_THRESHOLD)
+ * sumOfSquaresDeviation &lt; 0.001
+ * CONC_INCREASE &lt; CONC_THRESHOLD
  * <p/>
  * Upon reaching each of these simultaneously, the algorithm will then set the
- * current reference point as the best fit IC50 value amd return this to the
+ * current reference point as the best fit IC50 value and return this to the
  * calling method.
  * <p/>
  * If the reference point's concentration ever exceeds the maximum observed
@@ -67,12 +67,8 @@ import java.util.logging.Logger;
  * D = Maximum asymptote. In an bioassay where you have a standard curve, this can be thought of
  * as the response value for infinite standard concentration.
  * <p/>
- * <p>Title: </p>
- * <p>Description: </p>
- * <p>Copyright: Copyright (c) 2002</p>
- * <p>Company: </p>
  *
- * @author unascribed
+ * @author Chris Palmer, Tim Dudgeon
  * @version 1.0
  */
 

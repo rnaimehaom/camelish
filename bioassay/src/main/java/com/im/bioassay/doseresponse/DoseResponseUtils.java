@@ -98,9 +98,9 @@ public class DoseResponseUtils {
     }
 
 
-    private static Pattern idPatt = Pattern.compile("([iI][dD])\\s*=(.*)");
-    private static Pattern xPatt = Pattern.compile("([xX])\\s*=(.*)");
-    private static Pattern yPatt = Pattern.compile("([yY])\\s*=(.*)");
+    private static final Pattern idPatt = Pattern.compile("([iI][dD])\\s*=(.*)");
+    private static final Pattern xPatt = Pattern.compile("([xX])\\s*=(.*)");
+    private static final Pattern yPatt = Pattern.compile("([yY])\\s*=(.*)");
 
     public static DoseResponseResult toDoseResponseResult(String input) {
 
@@ -151,7 +151,7 @@ public class DoseResponseUtils {
             int count = 0;
             for (Double d : input.getXValues()) {
                 if (count > 0) {
-                    builder.append(", ");
+                    builder.append(" ");
                 }
                 builder.append(d);
                 count++;
@@ -165,7 +165,7 @@ public class DoseResponseUtils {
                     int count = 0;
                     for (Double d : l) {
                         if (count > 0) {
-                            builder.append(", ");
+                            builder.append(" ");
                         }
                         builder.append(d);
                         count++;
@@ -199,7 +199,7 @@ public class DoseResponseUtils {
     }
 
     static private List<Double> parseValues(String vals) {
-        String[] toks = vals.split(",");
+        String[] toks = vals.trim().split("\\s+");
         List<Double> list = new ArrayList<Double>();
         for (String tok : toks) {
             String s = tok.trim();

@@ -29,9 +29,11 @@ allprojects {
         groovy "org.codehaus.groovy:groovy-all:2.2.2"
 
         compile "org.apache.camel:camel-core:$camelVersion"
+        compile "org.apache.camel:camel-csv:$camelVersion"
         compile "org.apache.camel:camel-groovy:$camelVersion"
         compile "org.slf4j:slf4j-simple:1.7.7"
         compile "org.apache.derby:derby:10.10.1.1"
+        compile "mysql:mysql-connector-java:5.1.13"
 
         testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
     }

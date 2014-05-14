@@ -38,8 +38,9 @@ public class ConnectionHandlerService extends ServiceSupport {
 
     @Override
     protected void doStop() throws Exception {
+        //conh.close();
         conh.setConnection(null);
-        conh.close();
+
     }
 
     public Connection getConnection() {
