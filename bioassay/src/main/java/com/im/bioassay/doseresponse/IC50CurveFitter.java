@@ -9,7 +9,6 @@ package com.im.bioassay.doseresponse;
  * @version 1.0
  */
 
-import java.math.BigDecimal;
 import java.util.logging.Logger;
 
 /**
@@ -74,7 +73,7 @@ import java.util.logging.Logger;
 
 public class IC50CurveFitter {
 
-    private static Logger log = Logger.getLogger(IC50CurveFitter.class.getName());
+    private static final Logger log = Logger.getLogger(IC50CurveFitter.class.getName());
 
     private double CONC_THRESHOLD = 0.001; // 0.1% change
     private double MINIMUM_INHIBITION_DEFAULT = 0.0;
@@ -413,15 +412,15 @@ public class IC50CurveFitter {
     }
 
     /**
-     * This method fits the Y value in the Dose-Response curve given by the
-     * formula:
-     * Y =
+     * This method calculates the Y value given an X value for the Dose-Response 
+     * curve given by the 4 parameter logistic formula.
      *
-     * @param x
+     * @param dd
      * @param ic50
      * @return
      */
     private double fitY_Value(double dd, IC50 ic50) {
+        // TODO remove this limitation - negative slopes should be allowed
         if (ic50.getHill() < 0.25) {
             ic50.setHill(0.25);
         }
@@ -431,9 +430,9 @@ public class IC50CurveFitter {
         return ic50.getBottom() + ((ic50.getTop() - ic50.getBottom()) / (1 + Math.pow(10, (hill * (logIC50 - logK)))));
     }//
 
-    private double fitY_Log(double x, IC50 ic50) {
-        return new BigDecimal(ic50.getBottom() + (ic50.getTop() - ic50.getBottom()) / (1 + Math.pow(10, ((Math.log(ic50.getConc()) / Math.log(10) - x) * 1.0)))).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-    }
+//    private double fitY_Log(double x, IC50 ic50) {
+//        return new BigDecimal(ic50.getBottom() + (ic50.getTop() - ic50.getBottom()) / (1 + Math.pow(10, ((Math.log(ic50.getConc()) / Math.log(10) - x) * 1.0)))).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+//    }
 
 
     private boolean stop = false;

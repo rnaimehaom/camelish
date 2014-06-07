@@ -1,12 +1,13 @@
 package com.im.chemaxon.io;
 
 import chemaxon.formats.MFileFormatUtil;
+import chemaxon.formats.MolImporter;
 import chemaxon.marvin.io.MPropHandler;
 import chemaxon.marvin.io.MRecord;
-import chemaxon.marvin.io.MRecordReader;
 import chemaxon.marvin.io.MRecordParseException;
+import chemaxon.marvin.io.MRecordReader;
 import chemaxon.struc.MProp;
-
+import chemaxon.struc.Molecule;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -118,6 +119,19 @@ public class MoleculeIOUtils {
             }
 
         };
+    }
+    
+    /** Creates an Iterator of Molecules from the InputStream
+     * Can be used as a Camel splitter.
+     * <code>split().method(MoleculeIOUtils.class, "moleculeIterator")</code>
+     *
+     * @param is The input molecules in any format that Marvin recognises
+     * @return Iterator of Molecules
+     * @throws IOException
+     */
+    public Iterator<Molecule> moleculeIterator(final InputStream is) throws IOException {
+        MolImporter importer = new MolImporter(is);
+        return importer.iterator();
     }
 
     public static Map<String, String> mrecordToMap(MRecord record) {
