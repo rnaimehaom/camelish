@@ -1,5 +1,6 @@
 package com.im.bioassay.doseresponse
 
+import com.im.bioassay.curvefit.FourPLModel
 import spock.lang.Specification
 
 /**
@@ -95,23 +96,14 @@ y=5 9 25 70 90 95
     def "Test writing to String"() {
         when:
         DoseResponseResult result = DataUtils.createSingle()
-        def IC50 ic50 = new IC50();
-        ic50.setConc(55.55d);
-        ic50.setHill(0.99d);
-        ic50.setBottom(1.1d);
-        ic50.setTop(99.9d);
-        ic50.setIC50Modifier(">");
-        ic50.setSumSquares(12.34d);
-        result.setIC50(ic50);
+        def FourPLModel ic50 = new FourPLModel(1.1d, 99.9d, 0.99d, '>', 55.55d)
+        result.setFitModel(ic50)
 
         String s = DoseResponseUtils.fromDoseResponseResult(result)
         println s
 
         then:
         s != null
-
-
     }
-
 
 }

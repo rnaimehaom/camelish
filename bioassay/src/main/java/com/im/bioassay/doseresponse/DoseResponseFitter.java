@@ -1,5 +1,7 @@
 package com.im.bioassay.doseresponse;
 
+import com.im.bioassay.curvefit.FourPLFitter;
+import com.im.bioassay.curvefit.FourPLModel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -12,7 +14,7 @@ public class DoseResponseFitter {
     
     private static final Logger LOG = Logger.getLogger(DoseResponseFitter.class.getName());
 
-    IC50CurveFitter fitter = new IC50CurveFitter();
+    FourPLFitter fitter = new FourPLFitter();
 
     public void fit(DoseResponseResult result) {
 
@@ -40,8 +42,8 @@ public class DoseResponseFitter {
             i++;
         }
 
-        IC50 ic50 = fitter.calcBestIC50(x, y);
-        result.setIC50(ic50);
-        LOG.log(Level.FINE, "Fit was {0}", ic50.getConc());
+        FourPLModel ic50 = fitter.calcBestModel(x, y);
+        result.setFitModel(ic50);
+        LOG.log(Level.FINE, "Fit was {0}", ic50.getInflection());
     }
 }

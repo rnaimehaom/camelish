@@ -14,9 +14,9 @@ class DoseResponseFitterSpecification extends Specification {
         fitter.fit(result)
 
         then:
-        result.ic50 != null
-        result.ic50.conc != null
-        result.ic50.hill != null
+        result.fitModel != null
+        result.fitModel.inflection != null
+        result.fitModel.slope != null
 
     }
 }

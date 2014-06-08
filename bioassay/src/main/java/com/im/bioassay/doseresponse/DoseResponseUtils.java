@@ -1,5 +1,6 @@
 package com.im.bioassay.doseresponse;
 
+import com.im.bioassay.curvefit.FourPLModel;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;
@@ -174,11 +175,11 @@ public class DoseResponseUtils {
                 }
             }
         }
-        IC50 ic50 = input.getIC50();
+        FourPLModel ic50 = input.getFitModel();
         if (ic50 != null) {
-            builder.append("ic50 = ").append(ic50.getConc()).append("\n");
-            builder.append("mod = ").append(ic50.getIC50Modifier()).append("\n");
-            builder.append("hill = ").append(ic50.getHill()).append("\n");
+            builder.append("inflection = ").append(ic50.getInflection()).append("\n");
+            builder.append("mod = ").append(ic50.getModifier()).append("\n");
+            builder.append("slope = ").append(ic50.getSlope()).append("\n");
             builder.append("bottom = ").append(ic50.getBottom()).append("\n");
             builder.append("top = ").append(ic50.getTop()).append("\n");
             builder.append("ss = ").append(ic50.getSumSquares()).append("\n");

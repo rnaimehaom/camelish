@@ -1,5 +1,6 @@
 package com.im.bioassay.doseresponse;
 
+import com.im.bioassay.curvefit.FourPLModel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +10,7 @@ import java.util.List;
 public class DoseResponseResult {
 
     String id;
-    IC50 ic50;
+    FourPLModel fitModel;
     List<Double> xValues;
     List<List<Double>> yValues = new ArrayList<List<Double>>();
 
@@ -21,12 +22,12 @@ public class DoseResponseResult {
         this.id = id;
     }
 
-    public IC50 getIC50() {
-        return ic50;
+    public FourPLModel getFitModel() {
+        return fitModel;
     }
 
-    public void setIC50(IC50 ic50) {
-        this.ic50 = ic50;
+    public void setFitModel(FourPLModel model) {
+        this.fitModel = model;
     }
 
     public List<Double> getXValues() {
