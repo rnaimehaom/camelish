@@ -1,4 +1,4 @@
-package com.im.camel.examples.chemaxon
+package com.im.examples
 
 import com.im.chemaxon.io.MoleculeIOUtils
 import chemaxon.jchem.db.*

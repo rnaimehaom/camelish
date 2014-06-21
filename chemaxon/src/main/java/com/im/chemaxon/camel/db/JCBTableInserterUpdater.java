@@ -100,15 +100,15 @@ public abstract class JCBTableInserterUpdater extends ConnectionHandlerService i
         try {
             executionCount++;
             updateHandler.execute();
-        } catch (Exception e) {
+        } catch (SQLException e) {
             errorCount++;
             throw e;
         }
     }
 
     /**
-     * Call back to allow the UpdateHandler to be configured once it is created.
-     * Default is to do nothing.
+     * Call back to allow the compound_structures to be configured once it is
+     * created. Default is to do nothing.
      *
      * @param uh The UpdateHandler to configure
      */

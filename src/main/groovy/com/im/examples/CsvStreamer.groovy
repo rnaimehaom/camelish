@@ -1,4 +1,4 @@
-package com.im.camel.examples.chemaxon
+package com.im.examples
 
 import org.apache.camel.*
 import org.apache.camel.builder.RouteBuilder

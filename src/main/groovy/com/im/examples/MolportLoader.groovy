@@ -1,4 +1,4 @@
-package com.im.camel.examples.chemaxon
+package com.im.examples
 
 import com.im.chemaxon.io.MoleculeIOUtils
 import com.im.camel.processor.ChunkBasedReporter
@@ -12,13 +12,13 @@ import org.apache.camel.*
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.impl.DefaultCamelContext
 
-final String PATH = '/Users/timbo/data/structures/drugbank/'
-final String STRUCTURE_TABLE_NAME = 'DRUGBANK_FEB_2014'
-final String STRUCTURE_FILE_NAME = 'all.sdf'
+final String PATH = '/Users/timbo/data/structures/molport/All Available BB/load'
+final String STRUCTURE_FILE_NAME = 'hsbb-024-000-000--024-999-999.sdf.gz'
+final String STRUCTURE_TABLE_NAME = 'MOLPORT_JUN_2014'
 final int REPORTING_CHUNK_SIZE = 1000
 final String SZR_LOC = 'src/misc/standardizer.xml'
 
-File errF = new File(PATH + STRUCTURE_FILE_NAME + '_errrors')
+File errF = new File('/Users/timbo/data/structures/molport/MOLPORT_JUN_2014_errrors')
 errF.delete()
 
 Connection con = DriverManager.getConnection('jdbc:mysql://localhost/vendordbs', 'vendordbs', 'vendordbs')
@@ -34,21 +34,20 @@ if (UpdateHandler.isStructureTable(conh, STRUCTURE_TABLE_NAME)) {
 }
 
 StructureTableOptions opts = new StructureTableOptions(STRUCTURE_TABLE_NAME, TableTypeConstants.TABLE_TYPE_MOLECULES)
-opts.extraColumnDefinitions = ',DRUGBANK_ID CHAR(7), DRUG_GROUPS VARCHAR(100)'
+opts.extraColumnDefinitions = ',REGID VARCHAR(32)'
 opts.standardizerConfig = szr
 UpdateHandler.createStructureTable(conh, opts)
 
 JCBTableInserterUpdater updateHandlerProcessor = new JCBTableInserterUpdater(UpdateHandler.INSERT, 
-    STRUCTURE_TABLE_NAME, 'DRUGBANK_ID, DRUG_GROUPS') {
+    STRUCTURE_TABLE_NAME, 'REGID') {
 
     @Override
     protected void setValues(Exchange exchange, UpdateHandler updateHandler) {
         MRecord record = exchange.in.getBody(MRecord.class)
         def props = record.propertyContainer
         updateHandler.structure = record.string
-        updateHandler.setValueForAdditionalColumn(1, MPropHandler.convertToString(props, 'DRUGBANK_ID'))       
-        updateHandler.setValueForAdditionalColumn(2, MPropHandler.convertToString(props, 'DRUG_GROUPS'))       
-    }
+        updateHandler.setValueForAdditionalColumn(1, MPropHandler.convertToString(props, 'PUBCHEM_EXT_DATASOURCE_REGID'))       
+     }
 }
 updateHandlerProcessor.connectionHandler = conh
 
@@ -59,7 +58,9 @@ camelContext.addRoutes(new RouteBuilder() {
             .handled(true)
             .to('direct:errors')
             
-            from('direct:start')
+            from('file:/Users/timbo/data/structures/molport/All Available BB?antInclude=*.gz')
+            .log('Processing file ${header.CamelFileName}')
+            .unmarshal().gzip()
             .split().method(MoleculeIOUtils.class, 'mrecordIterator').streaming()
             //.log('Processing line ${body}')
             .process(updateHandlerProcessor)
@@ -73,14 +74,5 @@ camelContext.addRoutes(new RouteBuilder() {
         }
     })
 camelContext.start()
-
-ProducerTemplate t = camelContext.createProducerTemplate()
-t.sendBody('direct:start', new File(PATH + STRUCTURE_FILE_NAME))
                                            
-sleep(1000)
-
-Sql db = new Sql(con)
-int rows = db.firstRow('select count(*) from ' + STRUCTURE_TABLE_NAME)[0]
-println "Found $rows rows"
-
-camelContext.stop()
+synchronized (this) { this.wait() }

@@ -1,4 +1,4 @@
-package com.im.chemaxon.camel.examples
+package com.im.examples
 
 import com.im.chemaxon.molecule.MoleculeUtils
 import chemaxon.formats.MolExporter

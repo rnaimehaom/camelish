@@ -1,4 +1,4 @@
-package com.im.camel.examples.bioassay
+package com.im.examples
 
 import com.im.bioassay.camel.aggregation.DoseResponseResultAggregationStrategy
 import org.apache.camel.*

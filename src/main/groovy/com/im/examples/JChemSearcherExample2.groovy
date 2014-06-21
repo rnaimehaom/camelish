@@ -1,4 +1,4 @@
-package com.im.chemaxon.camel.examples
+package com.im.examples
 
 import chemaxon.jchem.db.JChemSearch
 import chemaxon.sss.search.JChemSearchOptions
