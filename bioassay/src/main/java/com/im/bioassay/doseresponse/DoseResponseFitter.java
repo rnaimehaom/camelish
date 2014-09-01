@@ -1,6 +1,7 @@
 package com.im.bioassay.doseresponse;
 
 import com.im.bioassay.curvefit.FourPLFitter;
+import com.im.bioassay.curvefit.FourPLFitterParams;
 import com.im.bioassay.curvefit.FourPLModel;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,12 @@ public class DoseResponseFitter {
     
     private static final Logger LOG = Logger.getLogger(DoseResponseFitter.class.getName());
 
-    FourPLFitter fitter = new FourPLFitter();
+    private FourPLFitter fitter = new FourPLFitter();
+    private FourPLFitterParams params = new FourPLFitterParams();
+    
+    public FourPLFitterParams getParams() {
+        return params;
+    }
 
     public void fit(DoseResponseResult result) {
 

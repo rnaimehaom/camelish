@@ -1,4 +1,6 @@
-group = 'im.camelish.bioassay'
+apply plugin: 'maven'
+
+group = 'im.camelish'
 description = 'Camelish BioAssay extensions'
 
 dependencies {
@@ -7,4 +9,12 @@ dependencies {
 
     testCompile project(':core-test')
 
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "file:///Users/timbo/tmp/myRepo/")
+        }
+    }
 }

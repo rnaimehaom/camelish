@@ -14,20 +14,20 @@ public class FourPLModel extends CurveModel {
 
     public FourPLModel() { }
     
-    public FourPLModel(double bottom, double top, double slope, double inflection, String paramChanged, boolean paramIncreased) {
+    protected FourPLModel(Double bottom, Double top, Double slope, Double inflection, String paramChanged, boolean paramIncreased) {
         this(bottom, top, slope, inflection);
         this.lastParamChanged = paramChanged;
         this.lastParamIncreased = paramIncreased;
     }
     
-    public FourPLModel(double bottom, double top, double slope, double inflection) {
+    public FourPLModel(Double bottom, Double top, Double slope, Double inflection) {
         this.bottom = bottom;
         this.top = top;
         this.inflection = inflection;
         this.slope = slope;
     }
 
-   public FourPLModel(double bottom, double top, double slope, String modifier, double inflection) {
+   public FourPLModel(Double bottom, Double top, Double slope, String modifier, Double inflection) {
         this.bottom = bottom;
         this.top = top;
         this.inflection = inflection;

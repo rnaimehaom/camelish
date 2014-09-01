@@ -2,6 +2,7 @@ group = 'im.camelish'
 description = 'Camel tools for life sciences'
 
 apply plugin: 'idea'
+apply plugin: 'maven'
 
 //project.ext.set('camelVersion' : '2.13.0')
 camelVersion = "2.13.0"
@@ -12,6 +13,8 @@ def foobar = 'baz'
 allprojects {
     apply plugin: 'java'
     apply plugin: 'groovy'
+    
+    version = '0.1'
 
     repositories {
         mavenCentral()
@@ -29,17 +32,23 @@ allprojects {
         groovy "org.codehaus.groovy:groovy-all:2.2.2"
 
         compile "org.apache.camel:camel-core:$camelVersion"
-        compile "org.apache.camel:camel-csv:$camelVersion"
-        compile "org.apache.camel:camel-groovy:$camelVersion"
+        //compile "org.apache.camel:camel-csv:$camelVersion"
+        //compile "org.apache.camel:camel-groovy:$camelVersion"
+        //compile "org.apache.camel:camel-script:$camelVersion"
         compile "org.slf4j:slf4j-simple:1.7.7"
-        compile "org.apache.derby:derby:10.10.1.1"
-        compile "mysql:mysql-connector-java:5.1.13"
 
         testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
     }
 }
 
 dependencies {
+    compile "org.apache.derby:derby:10.10.1.1"
+    compile "mysql:mysql-connector-java:5.1.13"
+    compile "org.python:jython:2.7-b2"
+    compile "org.apache.camel:camel-csv:$camelVersion"
+    compile "org.apache.camel:camel-groovy:$camelVersion"
+    compile "org.apache.camel:camel-script:$camelVersion"
+    
     compile project(':core')
     compile project(':bioassay')
     compile project(':chemaxon')
@@ -54,3 +63,5 @@ task wrapper(type: Wrapper) {
     gradleVersion = '1.11'
     jarFile = 'wrapper/wrapper.jar'
 }
+
+

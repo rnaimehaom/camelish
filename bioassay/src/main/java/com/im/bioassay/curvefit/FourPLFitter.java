@@ -10,23 +10,22 @@ import java.util.logging.Logger;
 /**
  * Curve fitter for the 4 parameter logistic equation.
  * <p>
- * The 4PL equation is: Y = D+(A-D)/(1+(x/C)^B) where: 
+ * The 4PL equation is: Y = D+(A-D)/(1+(x/C)^B) where:
  * <br>
- * A = Minimum asymptote.
- * In a bioassay where you have a standard curve, this can be thought of as the
- * response value at 0 concentration (or infinite for descending curves).
+ * A = Minimum asymptote. In a bioassay where you have a standard curve, this
+ * can be thought of as the response value at 0 concentration (or infinite for
+ * descending curves).
  * <br>
- * B = Hill's slope. The Hill's slope refers to the steepness of the curve. It could
- * either be close to 1 or -1 depending on whether the data is ascending or
- * descending.
+ * B = Hill's slope. The Hill's slope refers to the steepness of the curve. It
+ * could either be close to 1 or -1 depending on whether the data is ascending
+ * or descending.
  * <br>
- * C = Inflection point. The inflection point is defined as the
- * point on the curve where the curvature changes direction or signs. C is the
- * value of X where Y=(D-A)/2. This is typically referred to as the IC50, EC50
- * etc.
+ * C = Inflection point. The inflection point is defined as the point on the
+ * curve where the curvature changes direction or signs. C is the value of X
+ * where Y=(D-A)/2. This is typically referred to as the IC50, EC50 etc.
  * <br>
- * D = Maximum asymptote. In an bioassay where you have a standard curve,
- * this can be thought of as the response value for infinite X (or zero X for
+ * D = Maximum asymptote. In an bioassay where you have a standard curve, this
+ * can be thought of as the response value for infinite X (or zero X for
  * descending curves)
  * <p/>
  * <p>
@@ -40,8 +39,7 @@ import java.util.logging.Logger;
  * alternative form of the constructor. e.g.  <code>
  * FourParmaterLogisticCurveFitter fitter = new FourParmaterLogisticCurveFitter(0d, 100d, null, null);
  * FourParmaterLogisticCurveModel best = fitter.calcBestModel(x, y);
- * </code> 
- * will fix the bottom and top values to 0 and 100, but let the
+ * </code> will fix the bottom and top values to 0 and 100, but let the
  * inflection point and slope to vary.
  * <p>
  * Various other methods specify parameters of the fitting process, such as
@@ -71,14 +69,7 @@ public class FourPLFitter
 
     private static final Logger LOG = Logger.getLogger(FourPLFitter.class.getName());
 
-    private Double inflection, slope, bottom, top;
-    private int maxIterations = 10000;
-    private Map<String, Double> minDeltas = new HashMap<String, Double>();
-    private double defaultDelta = 0.25;
-    private double defaultConvergenceCriteria = 0.001;
-    private double initialSlopeDeltaMin = 0.5d;
-    private double initialTopBottomDeltaMin = 1.0d;
-    private double defaultSlope = 0d;
+    private FourPLFitterParams params = new FourPLFitterParams();
 
     public static void main(String args[]) {
         double[] x = new double[]{1d, 10d, 100d, 1000d, 10000d, 100000d};
@@ -93,10 +84,7 @@ public class FourPLFitter
     }
 
     public FourPLFitter() {
-        minDeltas.put("inflection", defaultConvergenceCriteria);
-        minDeltas.put("slope", defaultConvergenceCriteria);
-        minDeltas.put("sumSquares", defaultConvergenceCriteria);
-        minDeltas.put("topBottom", defaultConvergenceCriteria);
+
     }
 
     /**
@@ -113,95 +101,22 @@ public class FourPLFitter
      */
     public FourPLFitter(Double bottom, Double top, Double inflection, Double slope) {
         this();
-        this.bottom = bottom;
-        this.top = top;
-        this.inflection = inflection;
-        this.slope = slope;
+        params.bottom = bottom;
+        params.top = top;
+        params.inflection = inflection;
+        params.slope = slope;
+    }
+
+    public FourPLFitter(FourPLFitterParams params) {
+        this.params = params;
+    }
+
+    public FourPLFitterParams getParams() {
+        return params;
     }
 
     /**
-     * @return the bottom
-     */
-    public Double getBottom() {
-        return bottom;
-    }
-
-    /**
-     * @return the top
-     */
-    public Double getTop() {
-        return top;
-    }
-
-    /**
-     * @return the inflection
-     */
-    public Double getInflection() {
-        return inflection;
-    }
-
-    /**
-     * @return the slope
-     */
-    public Double getSlope() {
-        return slope;
-    }
-
-    /**
-     * The maximum number of iterations to use before giving up and returning
-     * null. Default is 10,000
-     *
-     * @return the maxIterations
-     */
-    public int getMaxIterations() {
-        return maxIterations;
-    }
-
-    /**
-     * Set the maximum number of iterations.
-     *
-     * @param maxIterations the maxIterations to set
-     */
-    public void setMaxIterations(int maxIterations) {
-        this.maxIterations = maxIterations;
-    }
-
-    /** The convergence criteria.
-     * A map of values. Keys are bottom, top, slope, inflection.
-     * These are set to 0.001 by default.
-     * 
-     * @return the minDeltas
-     */
-    public Map<String, Double> getMinDeltas() {
-        return minDeltas;
-    }
-
-    /**
-     * @return the defaultDelta
-     */
-    public Double getDefaultDelta() {
-        return defaultDelta;
-    }
-
-    /**
-     * @return the defaultSlope
-     */
-    public Double getDefaultSlope() {
-        return defaultSlope;
-    }
-
-    /**
-     * Set the default slope. Default is zero, so if you know your data is
-     * always ascending or descending you can speed up the process slightly by
-     * setting to 1 or -1 accordingly.
-     *
-     * @param defaultSlope the defaultSlope to set
-     */
-    public void setDefaultSlope(Double defaultSlope) {
-        this.defaultSlope = defaultSlope;
-    }
-
-    /** Calculate Y give X for the given fit model.
+     * Calculate Y give X for the given fit model.
      *
      * @param model
      * @param x
@@ -217,12 +132,13 @@ public class FourPLFitter
         return y;
     }
 
-    /** the entry point to doing a curve fit.
-     * 
+    /**
+     * the entry point to doing a curve fit.
+     *
      * @param xValues
      * @param yValues
-     * @return The best model after convergence is achieved, or null if convergence 
-     * does not happen within the specified number of iterations.
+     * @return The best model after convergence is achieved, or null if
+     * convergence does not happen within the specified number of iterations.
      */
     public FourPLModel calcBestModel(double[] xValues, double[] yValues) {
 
@@ -251,22 +167,26 @@ public class FourPLFitter
             FourPLModel model,
             double[] xValues,
             double[] yValues) {
-        if (model.inflection == null) {
+        if (params.inflection == null) {
             // Get the initial X estimate
             model.inflection = estimateInflection(xValues, yValues);
+        } else {
+            model.inflection = params.inflection;
         }
-        if (model.slope == null) {
-            model.slope = defaultSlope;
+        if (params.slope == null) {
+            model.slope = params.defaultSlope;
+        } else {
+            model.slope = params.slope;
         }
-        if (this.bottom == null) {
+        if (params.bottom == null) {
             model.bottom = findMin(yValues);
         } else {
-            model.bottom = this.bottom;
+            model.bottom = params.bottom;
         }
-        if (this.top == null) {
+        if (params.top == null) {
             model.top = findMax(yValues);
         } else {
-            model.top = this.top;
+            model.top = params.top;
         }
     }
 
@@ -327,9 +247,9 @@ public class FourPLFitter
                 double[] xValues,
                 double[] yValues) {
 
-            deltas.put("inflection", initModel.inflection * defaultDelta);
-            deltas.put("slope", Math.max(initialSlopeDeltaMin, initModel.slope * defaultDelta));
-            deltas.put("topBottom", Math.max(initialTopBottomDeltaMin, (initModel.top - initModel.bottom) / 25));
+            deltas.put("inflection", initModel.inflection * params.defaultDelta);
+            deltas.put("slope", Math.max(params.initialSlopeDeltaMin, initModel.slope * params.defaultDelta));
+            deltas.put("topBottom", Math.max(params.initialTopBottomDeltaMin, (initModel.top - initModel.bottom) / 25));
 
             initModel.sumSquares = calculateSumOfSquares(xValues, yValues, initModel);
 
@@ -379,7 +299,7 @@ public class FourPLFitter
                     // none of the new ones were any better
                     bestModel = refModel;
                 }
-                if (count > maxIterations) {
+                if (count > params.maxIterations) {
                     LOG.log(Level.WARNING, "Terminating - too many iterations{0}", bestModel);
                     return null;
                 }
@@ -399,27 +319,27 @@ public class FourPLFitter
 
         boolean hasConverged(FourPLModel nue, FourPLModel last) {
             LOG.log(Level.FINE, "Checking  {0}\n  against {1}", new Object[]{nue, last});
-            if (last.sumSquares < nue.sumSquares || (last.sumSquares - nue.sumSquares) > minDeltas.get("sumSquares")) {
+            if (last.sumSquares < nue.sumSquares || (last.sumSquares - nue.sumSquares) > params.minDeltas.get("sumSquares")) {
                 LOG.fine("Not converged: SS");
                 return false;
             }
             double inflectionChange = Math.abs(nue.inflection - last.inflection) / last.inflection;
-            if (inflectionChange > minDeltas.get("inflection")) {
+            if (inflectionChange > params.minDeltas.get("inflection")) {
                 LOG.finer("Not converged: Inflection ");
                 return false;
             }
             double slopeChange = Math.abs(nue.slope - last.slope) / last.slope;
-            if (slopeChange > minDeltas.get("slope")) {
+            if (slopeChange > params.minDeltas.get("slope")) {
                 LOG.finer("Not converged: Slope ");
                 return false;
             }
             double bottomChange = Math.abs(nue.bottom - last.bottom) / last.bottom;
-            if (bottomChange > minDeltas.get("topBottom")) {
+            if (bottomChange > params.minDeltas.get("topBottom")) {
                 LOG.finer("Not converged: Bottom ");
                 return false;
             }
             double topChange = Math.abs(nue.top - last.top) / last.top;
-            if (topChange > minDeltas.get("topBottom")) {
+            if (topChange > params.minDeltas.get("topBottom")) {
                 LOG.finer("Not converged: Top ");
                 return false;
             }
@@ -430,19 +350,20 @@ public class FourPLFitter
         List<FourPLModel> generateNextModels(FourPLModel refModel) {
             List<FourPLModel> models = new ArrayList<FourPLModel>();
             // TODO - exclude the model we have just come from
-            if (inflection == null) {
+            if (params.inflection == null) {
                 models.add(new FourPLModel(refModel.getBottom(), refModel.getTop(), refModel.slope, refModel.inflection + deltas.get("inflection"), "inflection", true));
-                models.add(new FourPLModel(refModel.getBottom(), refModel.getTop(), refModel.slope + deltas.get("slope"), refModel.inflection, "slope", true));
-            }
-            if (slope == null) {
                 models.add(new FourPLModel(refModel.getBottom(), refModel.getTop(), refModel.slope, refModel.inflection - deltas.get("inflection"), "inflection", false));
-                models.add(new FourPLModel(refModel.getBottom(), refModel.getTop(), refModel.slope - deltas.get("slope"), refModel.inflection, "slope", false));
             }
-            if (top == null) {
+            if (params.slope == null) {
+                models.add(new FourPLModel(refModel.getBottom(), refModel.getTop(), refModel.slope - deltas.get("slope"), refModel.inflection, "slope", false));
+                models.add(new FourPLModel(refModel.getBottom(), refModel.getTop(), refModel.slope + deltas.get("slope"), refModel.inflection, "slope", true));
+
+            }
+            if (params.top == null) {
                 models.add(new FourPLModel(refModel.getBottom(), refModel.getTop() + deltas.get("topBottom"), refModel.slope, refModel.inflection, "top", true));
                 models.add(new FourPLModel(refModel.getBottom(), refModel.getTop() - deltas.get("topBottom"), refModel.slope, refModel.inflection, "top", false));
             }
-            if (bottom == null) {
+            if (params.bottom == null) {
                 models.add(new FourPLModel(refModel.getBottom() + deltas.get("topBottom"), refModel.getTop(), refModel.slope, refModel.inflection, "bottom", true));
                 models.add(new FourPLModel(refModel.getBottom() - deltas.get("topBottom"), refModel.getTop(), refModel.slope, refModel.inflection, "bottom", false));
             }

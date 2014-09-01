@@ -1,0 +1,163 @@
+{
+  "profileId" : "lac-bioassay-curvefit",
+  "abstractProfile" : false,
+  "description" : "LAC curve fitexperiment with Camel and CDI and Java Container",
+  "parentProfiles" : [ "containers-java.weld" ],
+  "bundles" : [ "fab:mvn:io.fabric8.lacstart/lac-bioassay-curvefit/1.1.0-SNAPSHOT" ],
+  "minimumInstances" : 1,
+  "rootDependency" : {
+    "groupId" : "io.fabric8.lacstart",
+    "artifactId" : "lac-bioassay-curvefit",
+    "version" : "1.1.0-SNAPSHOT",
+    "type" : "jar",
+    "optional" : false,
+    "children" : [ {
+      "groupId" : "org.apache.camel",
+      "artifactId" : "camel-cdi",
+      "version" : "2.13.2",
+      "type" : "bundle",
+      "scope" : "compile",
+      "optional" : false,
+      "children" : [ {
+        "groupId" : "org.apache.camel",
+        "artifactId" : "camel-core",
+        "version" : "2.13.2",
+        "type" : "bundle",
+        "scope" : "compile",
+        "optional" : false
+      }, {
+        "groupId" : "org.apache.deltaspike.core",
+        "artifactId" : "deltaspike-core-api",
+        "version" : "0.7",
+        "type" : "bundle",
+        "scope" : "compile",
+        "optional" : false
+      }, {
+        "groupId" : "org.apache.deltaspike.core",
+        "artifactId" : "deltaspike-core-impl",
+        "version" : "0.7",
+        "type" : "bundle",
+        "scope" : "compile",
+        "optional" : false
+      }, {
+        "groupId" : "org.apache.deltaspike.cdictrl",
+        "artifactId" : "deltaspike-cdictrl-api",
+        "version" : "0.7",
+        "type" : "jar",
+        "scope" : "compile",
+        "optional" : false
+      }, {
+        "groupId" : "com.sun.xml.bind",
+        "artifactId" : "jaxb-impl",
+        "version" : "2.2.6",
+        "type" : "jar",
+        "scope" : "compile",
+        "optional" : false
+      } ]
+    }, {
+      "groupId" : "im.camelish.bioassay",
+      "artifactId" : "bioassay",
+      "version" : "0.1",
+      "type" : "jar",
+      "scope" : "compile",
+      "optional" : false,
+      "children" : [ {
+        "groupId" : "org.apache.camel",
+        "artifactId" : "camel-groovy",
+        "version" : "2.13.2",
+        "type" : "bundle",
+        "scope" : "compile",
+        "optional" : false,
+        "children" : [ {
+          "groupId" : "org.codehaus.groovy",
+          "artifactId" : "groovy-all",
+          "version" : "2.2.2",
+          "type" : "bundle",
+          "scope" : "compile",
+          "optional" : false
+        } ]
+      }, {
+        "groupId" : "mysql",
+        "artifactId" : "mysql-connector-java",
+        "version" : "5.1.13",
+        "type" : "bundle",
+        "scope" : "compile",
+        "optional" : false
+      }, {
+        "groupId" : "org.apache.camel",
+        "artifactId" : "camel-csv",
+        "version" : "2.13.2",
+        "type" : "bundle",
+        "scope" : "compile",
+        "optional" : false,
+        "children" : [ {
+          "groupId" : "org.apache.servicemix.bundles",
+          "artifactId" : "org.apache.servicemix.bundles.commons-csv",
+          "version" : "1.0-r706899_5",
+          "type" : "bundle",
+          "scope" : "compile",
+          "optional" : false
+        } ]
+      }, {
+        "groupId" : "org.python",
+        "artifactId" : "jython",
+        "version" : "2.7-b2",
+        "type" : "jar",
+        "scope" : "compile",
+        "optional" : false
+      }, {
+        "groupId" : "org.slf4j",
+        "artifactId" : "slf4j-simple",
+        "version" : "1.7.5",
+        "type" : "bundle",
+        "scope" : "compile",
+        "optional" : false
+      }, {
+        "groupId" : "org.apache.derby",
+        "artifactId" : "derby",
+        "version" : "10.10.1.1",
+        "type" : "bundle",
+        "scope" : "compile",
+        "optional" : false
+      }, {
+        "groupId" : "org.apache.camel",
+        "artifactId" : "camel-script",
+        "version" : "2.13.2",
+        "type" : "bundle",
+        "scope" : "compile",
+        "optional" : false
+      } ]
+    }, {
+      "groupId" : "org.jboss.weld.se",
+      "artifactId" : "weld-se",
+      "version" : "2.1.2.Final",
+      "type" : "jar",
+      "scope" : "compile",
+      "optional" : false
+    }, {
+      "groupId" : "org.slf4j",
+      "artifactId" : "slf4j-log4j12",
+      "version" : "1.7.5",
+      "type" : "bundle",
+      "scope" : "compile",
+      "optional" : false,
+      "children" : [ {
+        "groupId" : "org.slf4j",
+        "artifactId" : "slf4j-api",
+        "version" : "1.7.5",
+        "type" : "bundle",
+        "scope" : "compile",
+        "optional" : false
+      }, {
+        "groupId" : "log4j",
+        "artifactId" : "log4j",
+        "version" : "1.2.17",
+        "type" : "bundle",
+        "scope" : "compile",
+        "optional" : false
+      } ]
+    } ]
+  },
+  "webContextPath" : "lac-bioassay-curvefit",
+  "useResolver" : true
+}
