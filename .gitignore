@@ -9,4 +9,4 @@ derby.log
 .nb-gradle
 .nb-gradle-properties
 **/build/
-
+fabric8/profiles/lac/bioassay/curvefit/target
