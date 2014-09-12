@@ -77,7 +77,7 @@ public class FourPLFitter
         double[] y = new double[]{5d, 9d, 25d, 70d, 90d, 95d};
         //double[] y = new double[]{95d, 90d, 70d, 25d, 9d, 5d};
 
-        FourPLFitter fitter = new FourPLFitter(null, null, null, null);
+        FourPLFitter fitter = new FourPLFitter(null, 100d, null, null);
         FourPLModel best = fitter.calcBestModel(x, y);
 
         System.out.println("Best: " + best);
@@ -174,7 +174,7 @@ public class FourPLFitter
             model.inflection = params.inflection;
         }
         if (params.slope == null) {
-            model.slope = params.defaultSlope;
+            model.slope = params.initialSlope;
         } else {
             model.slope = params.slope;
         }
@@ -272,12 +272,12 @@ public class FourPLFitter
                 // TODO - make this bit multithreaded
                 for (FourPLModel model : models) {
                     model.sumSquares = calculateSumOfSquares(xValues, yValues, model);
-                    LOG.log(Level.FINE, "Tested model {0}", model);
+                    LOG.log(Level.FINER, "Tested model {0}", model);
                 }
                 //figure out the best
                 FourPLModel bestNewModel = findBestModel(models);
                 if (bestNewModel.sumSquares < refModel.sumSquares) {
-                    System.out.println("Improved model " + bestNewModel);
+                    LOG.log(Level.FINE, "Improved model {0}", bestNewModel);
                     bestModel = bestNewModel;
                     // have we converged yet?
                     stop = hasConverged(bestModel, refModel);
@@ -357,7 +357,6 @@ public class FourPLFitter
             if (params.slope == null) {
                 models.add(new FourPLModel(refModel.getBottom(), refModel.getTop(), refModel.slope - deltas.get("slope"), refModel.inflection, "slope", false));
                 models.add(new FourPLModel(refModel.getBottom(), refModel.getTop(), refModel.slope + deltas.get("slope"), refModel.inflection, "slope", true));
-
             }
             if (params.top == null) {
                 models.add(new FourPLModel(refModel.getBottom(), refModel.getTop() + deltas.get("topBottom"), refModel.slope, refModel.inflection, "top", true));
@@ -398,7 +397,7 @@ public class FourPLFitter
             double currentDelta = deltas.get(name);
             double newDelta = currentDelta * qty;
             updates.put(name, newDelta);
-            System.out.println("Updated delta " + name + " to " + updates.get(name));
+            LOG.log(Level.FINER, "Updated delta {0} to {1}", new Object[]{name, updates.get(name)});
         }
     }
 }

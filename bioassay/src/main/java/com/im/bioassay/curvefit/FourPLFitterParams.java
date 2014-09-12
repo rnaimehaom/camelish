@@ -9,8 +9,11 @@ import java.util.Map;
  */
 public class FourPLFitterParams {
 
+    public static final int DEFAULT_MAX_ITERATIONS = 10000;
+    public static final double DEFAULT_SLOPE = 0d;
+
     public Double bottom, top, inflection, slope, sumSquares;
-    public int maxIterations = 10000;
+    public int maxIterations = DEFAULT_MAX_ITERATIONS;
     /**
      * The convergence criteria. A map of values. Keys are bottom, top, slope,
      * inflection. These are set to 0.001 by default.
@@ -21,17 +24,30 @@ public class FourPLFitterParams {
     public double initialSlopeDeltaMin = 0.5d;
     public double initialTopBottomDeltaMin = 1.0d;
     /**
-     * Default is zero, so if you know your data is
-     * always ascending or descending you can speed up the process slightly by
-     * setting to 1 or -1 accordingly.
+     * Default is zero, so if you know your data is always ascending or
+     * descending you can speed up the process slightly by setting to 1 or -1
+     * accordingly.
      */
-    public double defaultSlope = 0d;
-    
+    public double initialSlope = DEFAULT_SLOPE;
+
     public FourPLFitterParams() {
         minDeltas.put("inflection", defaultConvergenceCriteria);
         minDeltas.put("slope", defaultConvergenceCriteria);
         minDeltas.put("sumSquares", defaultConvergenceCriteria);
         minDeltas.put("topBottom", defaultConvergenceCriteria);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder b = new StringBuilder();
+        b.append("Fit params: ");
+        if (top != null) {
+            b.append("Top: ").append(top);
+        }
+        if (bottom != null) {
+            b.append("Bottom: ").append(bottom);
+        }
+        return b.toString();
     }
 
 }

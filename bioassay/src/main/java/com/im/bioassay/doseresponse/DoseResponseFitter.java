@@ -15,14 +15,16 @@ public class DoseResponseFitter {
     
     private static final Logger LOG = Logger.getLogger(DoseResponseFitter.class.getName());
 
-    private FourPLFitter fitter = new FourPLFitter();
-    private FourPLFitterParams params = new FourPLFitterParams();
+    private final FourPLFitterParams params = new FourPLFitterParams();
+    private final FourPLFitter fitter = new FourPLFitter(params);
     
     public FourPLFitterParams getParams() {
         return params;
     }
 
     public void fit(DoseResponseResult result) {
+        
+        LOG.log(Level.INFO, "Fitting using params: {0}", params.toString());
 
         // there could be multiple sets of Y values so we need to explode the lists.
         List<Double> xVals = new ArrayList<Double>();

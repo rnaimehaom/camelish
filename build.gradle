@@ -7,14 +7,13 @@ apply plugin: 'maven'
 //project.ext.set('camelVersion' : '2.13.0')
 camelVersion = "2.13.0"
 sourceCompatibility = 1.6
-version = '0.1'
 def foobar = 'baz'
     
 allprojects {
     apply plugin: 'java'
     apply plugin: 'groovy'
     
-    version = '0.1'
+    version = '0.1-SNAPSHOT'
 
     repositories {
         mavenCentral()
