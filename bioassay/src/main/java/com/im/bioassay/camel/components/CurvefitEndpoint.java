@@ -31,7 +31,7 @@ public class CurvefitEndpoint extends DefaultEndpoint {
     private Double slope;
     
     @UriParam
-    private Double initialSlope;
+    private double initialSlope = FourPLFitterParams.DEFAULT_INITIAL_SLOPE;
     
     @UriParam
     private int maxIterations= FourPLFitterParams.DEFAULT_MAX_ITERATIONS;
@@ -129,14 +129,14 @@ public class CurvefitEndpoint extends DefaultEndpoint {
     /**
      * @return the initialSlope
      */
-    public Double getInitialSlope() {
+    public double getInitialSlope() {
         return initialSlope;
     }
 
     /**
      * @param initialSlope the initialSlope to set
      */
-    public void setInitialSlope(Double initialSlope) {
+    public void setInitialSlope(double initialSlope) {
         this.initialSlope = initialSlope;
     }
 

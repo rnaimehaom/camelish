@@ -10,7 +10,7 @@ import java.util.Map;
 public class FourPLFitterParams {
 
     public static final int DEFAULT_MAX_ITERATIONS = 10000;
-    public static final double DEFAULT_SLOPE = 0d;
+    public static final double DEFAULT_INITIAL_SLOPE = 0d;
 
     public Double bottom, top, inflection, slope, sumSquares;
     public int maxIterations = DEFAULT_MAX_ITERATIONS;
@@ -28,7 +28,7 @@ public class FourPLFitterParams {
      * descending you can speed up the process slightly by setting to 1 or -1
      * accordingly.
      */
-    public double initialSlope = DEFAULT_SLOPE;
+    public double initialSlope = DEFAULT_INITIAL_SLOPE;
 
     public FourPLFitterParams() {
         minDeltas.put("inflection", defaultConvergenceCriteria);
