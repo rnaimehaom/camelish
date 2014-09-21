@@ -14,7 +14,7 @@ dependencies {
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: "file:///Users/timbo/tmp/myRepo/")
+            repository(url: "file:///var/maven_repo/repo/")
         }
     }
 }
