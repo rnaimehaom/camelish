@@ -6,4 +6,4 @@ dependencies on external libraries can be kept under control.
 Also includes some prototype fabric8 profiles.
 
 Any questions contact Tim Dudgeon <tdudgeon@informaticsmatters.com>
-Test
+Test2
