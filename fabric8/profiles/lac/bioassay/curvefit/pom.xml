@@ -84,6 +84,12 @@
       <artifactId>camel-cdi</artifactId>
     </dependency>
     
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-box</artifactId>
+      <version>${camel-version}</version>
+    </dependency>
+    
     <!--dependency>
       <groupId>io.fabric8.mq</groupId>
       <artifactId>mq-fabric</artifactId>

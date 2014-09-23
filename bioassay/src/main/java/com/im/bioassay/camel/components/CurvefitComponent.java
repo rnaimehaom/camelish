@@ -17,7 +17,7 @@ import org.apache.camel.impl.DefaultComponent;
  */
 public class CurvefitComponent extends DefaultComponent {
     
-    private static Logger LOG = Logger.getLogger(CurvefitComponent.class.getName());
+    private static final Logger LOG = Logger.getLogger(CurvefitComponent.class.getName());
  
     
     @Override
