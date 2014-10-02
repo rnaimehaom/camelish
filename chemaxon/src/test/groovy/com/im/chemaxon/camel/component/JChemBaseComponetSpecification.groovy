@@ -29,7 +29,9 @@ class JChemBaseComponentSpecification extends CamelSpecificationBase {
     RouteBuilder createRouteBuilder() {
         return new RouteBuilder() {
             public void configure() {
-                from('direct:start').to("jchembase:testonly?mode=insert&structureTableName=TEST123&createTable=always&dataSourceRef=mydb").to('mock:result')
+                from('direct:start')
+                .to("jchembase:testonly?mode=insert&structureTableName=TEST123&createTable=always&extraColumns=name VARCHAR(100), age INTEGER&dataSourceRef=mydb")
+                .to('mock:result')
             }
         }
     }
@@ -42,6 +44,5 @@ class JChemBaseComponentSpecification extends CamelSpecificationBase {
         registry.put('mydb', ds)
         return new DefaultCamelContext(registry)
     }
-
 
 }

@@ -8,7 +8,6 @@ package com.im.chemaxon.camel.components;
 import chemaxon.jchem.db.JChemSearch;
 import chemaxon.sss.SearchConstants;
 import chemaxon.sss.search.JChemSearchOptions;
-import chemaxon.util.ConnectionHandler;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
 import org.apache.camel.Consumer;
@@ -26,12 +25,13 @@ public class JChemSearchEndpoint extends AbstractJChemTableEndpoint {
     private static Logger LOG = Logger.getLogger(JChemSearchEndpoint.class.getName());
 
     protected JChemSearch searcher;
+    private JChemSearchConsumer consumer;
 
-    /** JChem Search options string e.g. 't:d' 
-     * 
+    /**
+     * JChem Search options string e.g. 't:d'
+     *
      */
     private String searchOptions;
-
 
     public JChemSearchEndpoint(String uri, JChemSearchComponent component) {
         super(uri, component);
@@ -39,12 +39,15 @@ public class JChemSearchEndpoint extends AbstractJChemTableEndpoint {
 
     @Override
     public Producer createProducer() throws Exception {
+        LOG.info("Creating producer for " + getEndpointUri());
         return new JChemSearchProducer(this);
     }
 
     @Override
     public Consumer createConsumer(Processor processor) throws Exception {
-        throw new UnsupportedOperationException("from: not supported - You can't read messages from this endpoint");
+        LOG.info("Creating consumer for " + getEndpointUri());
+        consumer = new JChemSearchConsumer(this, processor);
+        return consumer;
     }
 
     @Override
@@ -66,16 +69,14 @@ public class JChemSearchEndpoint extends AbstractJChemTableEndpoint {
         this.searchOptions = searchOptions;
     }
 
-   
-    
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-        
+
         ds = getComponent().getCamelContext().getRegistry().lookupByNameAndType(getDataSourceRef(), DataSource.class);
-        
+
         conh = createConnectionHandler();
-        
+
         LOG.info("Creating JChemSearch");
         JChemSearchOptions opts = new JChemSearchOptions(SearchConstants.SUBSTRUCTURE);
         opts.setOptions(searchOptions);
@@ -83,15 +84,22 @@ public class JChemSearchEndpoint extends AbstractJChemTableEndpoint {
         searcher.setStructureTable(getStructureTableName());
         searcher.setSearchOptions(opts);
         searcher.setConnectionHandler(conh);
-        
+
     }
 
     @Override
     protected void doStop() throws Exception {
-        
+
         searcher = null;
-        
-        super.doStop();        
+
+        super.doStop();
     }
-    
+
+    /**
+     * @return the consumer
+     */
+    public JChemSearchConsumer getConsumer() {
+        return consumer;
+    }
+
 }

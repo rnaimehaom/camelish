@@ -8,7 +8,6 @@ package com.im.chemaxon.camel.components;
 import chemaxon.jchem.db.DatabaseProperties;
 import chemaxon.jchem.db.StructureTableOptions;
 import chemaxon.jchem.db.UpdateHandler;
-import chemaxon.util.ConnectionHandler;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,6 +40,7 @@ public class JChemBaseEndpoint extends AbstractJChemTableEndpoint {
         this.createTable = createTable;
     }
 
+
     public enum Mode {
 
         insert
@@ -56,7 +56,7 @@ public class JChemBaseEndpoint extends AbstractJChemTableEndpoint {
     private CreateTable createTable = CreateTable.never;
 
     protected final JChemBaseComponent component;
-    protected UpdateHandler uh;
+    protected UpdateHandler inserter, updater;
 
     public JChemBaseEndpoint(String uri, JChemBaseComponent component) {
         super(uri, component);
@@ -113,8 +113,9 @@ public class JChemBaseEndpoint extends AbstractJChemTableEndpoint {
         if (createTable != CreateTable.never) {
             createStructureTable();
         }
-
-        uh = new UpdateHandler(conh, UpdateHandler.INSERT, getStructureTableName(), "");
+        if (mode == Mode.insert) {
+            inserter = new UpdateHandler(conh, UpdateHandler.INSERT, getStructureTableName(), "");
+        }
         conh.setConnection(null);
     }
 
@@ -150,6 +151,7 @@ public class JChemBaseEndpoint extends AbstractJChemTableEndpoint {
 
         if (createStructureTable) {
             StructureTableOptions opts = new StructureTableOptions(getStructureTableName(), getStructureTableType());
+            opts.setExtraColumnDefinitions(extraColumns);
             UpdateHandler.createStructureTable(conh, opts);
             LOG.log(Level.INFO, "Structure table {0} created", getStructureTableName());
         }
@@ -158,8 +160,14 @@ public class JChemBaseEndpoint extends AbstractJChemTableEndpoint {
     @Override
     protected void doStop() throws Exception {
 
-        uh.close();
-        uh = null;
+        if (inserter != null) {
+            inserter.close();
+            inserter = null;
+        }
+        if (updater != null) {
+            updater.close();
+            updater = null;
+        }
 
         super.doStop();
 

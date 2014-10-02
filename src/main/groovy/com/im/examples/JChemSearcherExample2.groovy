@@ -2,7 +2,7 @@ package com.im.examples
 
 import chemaxon.jchem.db.JChemSearch
 import chemaxon.sss.search.JChemSearchOptions
-import com.im.chemaxon.camel.db.JChemSearcher
+import com.im.chemaxon.camel.db.AbstractJChemSearcher
 import com.im.chemaxon.io.MoleculeIOUtils
 import groovy.util.logging.Log
 import org.apache.camel.CamelContext
@@ -16,9 +16,8 @@ import java.sql.DriverManager
 import java.util.logging.Logger
 
 Logger logger = Logger.getLogger(this.class.getName())
-JChemSearchOptions opts = new JChemSearchOptions(JChemSearch.SIMILARITY)
-opts.dissimilarityThreshold = 0.25f
-JChemSearcher searcher = new JChemSearcher('MAYBRIDGESCREENINGCOLLECTION', opts) {
+
+AbstractJChemSearcher searcher = new AbstractJChemSearcher('MAYBRIDGESCREENINGCOLLECTION', 'sep=, t:i,dissimilarityThreshold:0.25') {
     
     @Override
     protected void handleSearchParams(Exchange exchange, JChemSearch jcs) {

@@ -35,7 +35,7 @@ public class JChemBaseProducer extends DefaultProducer {
         
         endpoint.prepareConnectionHandler();
         
-        UpdateHandler uh = endpoint.uh;
+        UpdateHandler uh = endpoint.inserter;
         uh.setStructure(mol);
         int id = uh.execute(true);
         LOG.info("Inserted structure with ID " + id);

@@ -12,6 +12,8 @@ dependencies {
 
     project(':core')
     
+    compile project(':core')
+    
     compile "org.apache.derby:derby:10.10.1.1"
     compile "mysql:mysql-connector-java:5.1.13"
 

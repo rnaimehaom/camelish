@@ -25,35 +25,24 @@ public abstract class AbstractJChemTableEndpoint extends DefaultEndpoint {
     private String structureTableName;
     private String propertyTableName = ConnectionHandler.DEFAULT_PROPERTY_TABLE;
     private int structureTableType = TableTypeConstants.TABLE_TYPE_DEFAULT;
+    protected String extraColumns;
 
     public AbstractJChemTableEndpoint(String uri, DefaultComponent component) {
         super(uri, component);
     }
 
-    /**
-     * @return the dataSourceRef
-     */
     public String getDataSourceRef() {
         return dataSourceRef;
     }
 
-    /**
-     * @param dataSourceRef the dataSourceRef to set
-     */
     public void setDataSourceRef(String dataSourceRef) {
         this.dataSourceRef = dataSourceRef;
     }
 
-    /**
-     * @return the structureTableName
-     */
     public String getStructureTableName() {
         return structureTableName;
     }
 
-    /**
-     * @param structureTableName the structureTableName to set
-     */
     public void setStructureTableName(String structureTableName) {
         this.structureTableName = structureTableName;
     }
@@ -72,16 +61,10 @@ public abstract class AbstractJChemTableEndpoint extends DefaultEndpoint {
         this.structureTableType = structureTableType;
     }
 
-    /**
-     * @return the propertyTableName
-     */
     public String getPropertyTableName() {
         return propertyTableName;
     }
 
-    /**
-     * @param propertyTableName the propertyTableName to set
-     */
     public void setPropertyTableName(String propertyTableName) {
         this.propertyTableName = propertyTableName;
     }
@@ -95,6 +78,14 @@ public abstract class AbstractJChemTableEndpoint extends DefaultEndpoint {
     protected void prepareConnectionHandler() throws SQLException {
         // get the "correct" connection so that we handle transactions correctly
         conh.setConnection(ds.getConnection());
+    }
+
+    public String getExtraColumns() {
+        return extraColumns;
+    }
+
+    public void setExtraColumns(String extraColumns) {
+        this.extraColumns = extraColumns;
     }
 
 }

@@ -1,6 +1,7 @@
 package com.im.chemaxon.io;
 
 import chemaxon.formats.MFileFormatUtil;
+import chemaxon.formats.MolFormatException;
 import chemaxon.formats.MolImporter;
 import chemaxon.marvin.io.MPropHandler;
 import chemaxon.marvin.io.MRecord;
@@ -8,8 +9,12 @@ import chemaxon.marvin.io.MRecordParseException;
 import chemaxon.marvin.io.MRecordReader;
 import chemaxon.struc.MProp;
 import chemaxon.struc.Molecule;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,9 +28,10 @@ public class MoleculeIOUtils {
 
     static Logger log = Logger.getLogger(MoleculeIOUtils.class.getName());
 
-    /** Creates an Iterator of MRecords from the InputStream
-     * Designed for splitting a file or stream into individual records without generating a molecule instance.
-     * Can be used as a Camel splitter.
+    /**
+     * Creates an Iterator of MRecords from the InputStream Designed for
+     * splitting a file or stream into individual records without generating a
+     * molecule instance. Can be used as a Camel splitter.
      * <code>split().method(MoleculeIOUtils.class, "mrecordIterator")</code>
      *
      * @param is The input molecules in any format that Marvin recognises
@@ -43,7 +49,8 @@ public class MoleculeIOUtils {
             private MRecord nextRecord;
             int count = 0;
 
-            /** Public access in case direct access is needed during operation.
+            /**
+             * Public access in case direct access is needed during operation.
              * Use with care.
              *
              * @return The instance doing the parsing
@@ -120,9 +127,10 @@ public class MoleculeIOUtils {
 
         };
     }
-    
-    /** Creates an Iterator of Molecules from the InputStream
-     * Can be used as a Camel splitter.
+
+    /**
+     * Creates an Iterator of Molecules from the InputStream Can be used as a
+     * Camel splitter.
      * <code>split().method(MoleculeIOUtils.class, "moleculeIterator")</code>
      *
      * @param is The input molecules in any format that Marvin recognises
@@ -143,6 +151,61 @@ public class MoleculeIOUtils {
             vals.put(fields[x], MPropHandler.convertToString(values.get(x), null));
         }
         return vals;
+    }
+
+    public static Molecule convertToMolecule(String s) throws MolFormatException {
+        return MolImporter.importMol(s);
+    }
+
+    public static Molecule convertToMolecule(byte[] b) throws MolFormatException {
+        return MolImporter.importMol(b);
+    }
+
+    public static Molecule convertToMolecule(Blob b) throws MolFormatException, SQLException {
+        byte[] bytes = b.getBytes(1, (int) b.length());
+        return MolImporter.importMol(bytes);
+    }
+
+    public static Molecule convertToMolecule(Clob c) throws MolFormatException, SQLException {
+        String s = c.getSubString(1, (int) c.length());
+        return convertToMolecule(s);
+    }
+/** Takes a Map of properties, one of which is a Molecule in some form and returns
+ * a Molecule (converted as necessary) with the additional values from the Map set 
+ * as properties of the Molecule (see Molecule.getProperties()).
+ * 
+ * @param map The input
+ * @param structureKey The key under which the structure is located
+ * @return The Molecule
+ * @throws MolFormatException
+ * @throws SQLException 
+ */
+    public static Molecule convertToMolecule(Map<String, Object> map, String structureKey) throws MolFormatException, SQLException {
+
+        Object v = map.get(structureKey);
+        Molecule mol = null;
+        if (v.getClass() == String.class) {
+            mol = convertToMolecule((String) v);
+        } else if (v.getClass() == byte[].class) {
+            mol = convertToMolecule((byte[]) v);
+        } else if (v.getClass() == Blob.class) {
+            mol = convertToMolecule((Blob) v);
+        } else if (v.getClass() == Clob.class) {
+            mol = convertToMolecule((Clob) v);
+        } else if (v.getClass() == Molecule.class) {
+            mol = (Molecule)v;
+        } else {
+            throw new IllegalArgumentException("Unsupported conversion for Molecule: "
+                    + v.getClass().getName());
+        }
+
+        for (Map.Entry<String, Object> e : map.entrySet()) {
+            if (!e.getKey().equals(structureKey)) {
+                mol.properties().setObject(e.getKey(), e.getValue());
+            }
+        }
+
+        return mol;
     }
 
 }

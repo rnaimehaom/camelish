@@ -23,7 +23,7 @@ public class JChemSearchComponent extends DefaultComponent {
     @Override
     protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters)
             throws Exception {
-
+        LOG.info("Creating endpoint " + uri + "|" + remaining);
         return new JChemSearchEndpoint(uri, this);
     }
 

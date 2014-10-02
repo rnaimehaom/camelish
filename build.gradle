@@ -1,3 +1,4 @@
+
 group = 'im.camelish'
 description = 'Camel tools for life sciences'
 
@@ -28,9 +29,10 @@ allprojects {
 
     dependencies {
         
-        groovy "org.codehaus.groovy:groovy-all:2.2.2"
+        compile "org.codehaus.groovy:groovy-all:2.2.2"
 
         compile "org.apache.camel:camel-core:$camelVersion"
+        compile "org.apache.camel:camel-jdbc:$camelVersion"
         //compile "org.apache.camel:camel-csv:$camelVersion"
         //compile "org.apache.camel:camel-groovy:$camelVersion"
         //compile "org.apache.camel:camel-script:$camelVersion"
@@ -52,11 +54,13 @@ dependencies {
     compile project(':bioassay')
     compile project(':chemaxon')
     testCompile project(':core-test')
+    
 }
 
 task groovyVersion << {
     println "Groovy version is ${GroovySystem.version}"
 }
+
 
 task wrapper(type: Wrapper) {
     gradleVersion = '1.11'

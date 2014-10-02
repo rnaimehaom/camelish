@@ -1,8 +1,7 @@
 package com.im.examples
 
 import chemaxon.jchem.db.JChemSearch
-import chemaxon.sss.search.JChemSearchOptions
-import com.im.chemaxon.camel.db.JChemSearcher
+import com.im.chemaxon.camel.db.AbstractJChemSearcher
 import org.apache.camel.CamelContext
 import org.apache.camel.Exchange
 import org.apache.camel.ProducerTemplate
@@ -19,8 +18,7 @@ import java.sql.DriverManager
 
 Connection con = DriverManager.getConnection('jdbc:derby:/Users/timbo/IJCProjects/SearchableDBs/.config/localdb/db;upgrade=true')
 
-JChemSearchOptions opts = new JChemSearchOptions(JChemSearch.SUBSTRUCTURE)
-JChemSearcher searcher = new JChemSearcher('DRUGBANKALL', opts) {
+AbstractJChemSearcher searcher = new AbstractJChemSearcher('DRUGBANKALL', 't:s') {
     @Override
     protected void handleSearchParams(Exchange exchange, JChemSearch jcs) {
         jcs.setQueryStructure(exchange.in.body)

@@ -16,13 +16,15 @@ class JChemSearchComponentSpecification extends CamelSpecificationBase {
 
     def 'test component works'() {
         
+        println "running test"
+        
         given:
         def mock = camelContext.getEndpoint('mock:result')
         
         
 
         when:
-        template.sendBody('direct:start', "c1ccccc1")
+        template.sendBody('direct:molportsearch', "c1ccccc1")
 
         then:
         List exchs = mock.receivedExchanges
@@ -30,7 +32,7 @@ class JChemSearchComponentSpecification extends CamelSpecificationBase {
     }
     
     CamelContext createCamelContext() {
-        
+        println "Creating camel context"
         EmbeddedDataSource ds = DbTestUtils.createDerbyDataSource("memory:JChemSearchComponentSpecification", true)
         
         createMolsTable(ds.connection)
@@ -40,6 +42,7 @@ class JChemSearchComponentSpecification extends CamelSpecificationBase {
     }
     
     void createMolsTable(Connection con) {
+        println "Creating mols table"
         ConnectionHandler conh = new ConnectionHandler(con, ConnectionHandler.DEFAULT_PROPERTY_TABLE)
         DatabaseProperties.createPropertyTable(conh)
         println "property table created"
@@ -58,7 +61,10 @@ class JChemSearchComponentSpecification extends CamelSpecificationBase {
     RouteBuilder createRouteBuilder() {
         return new RouteBuilder() {
             public void configure() {
-                from('direct:start').to('jchemsearch:test?structureTableName=molecules&searchOptions=t:s&dataSourceRef=mydb').to('mock:result')
+                from('direct:molportsearch')
+                .to('jchemsearch:test?structureTableName=molecules&searchOptions=t:s&dataSourceRef=mydb')
+                .log('jchemsearch completed')
+                .to('mock:result')
             }
         }
     }
