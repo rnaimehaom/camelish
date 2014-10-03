@@ -1,0 +1,18 @@
+// example molport.properties. Rename file and edit accordingly
+
+import chemaxon.jchem.db.TableTypeConstants
+
+db {
+    url='jdbc_url'
+    user='username'
+    password='password'
+    table='MOLPORT_JUN_2014_XXX'
+    tableType=TableTypeConstants.TABLE_TYPE_MOLECULES
+    standardizer='src/misc/standardizer.xml'
+    extraColumnDefs=['REGID VARCHAR(32)']
+}
+data {
+    // you need to register with MolPort to get a login ID to allow to download
+    path='/path/to/molport'
+    fields=[PUBCHEM_EXT_DATASOURCE_REGID:String.class]
+}

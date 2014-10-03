@@ -35,9 +35,4 @@ public class MoleculeConvertor {
     public static Molecule convert(Clob clob, Exchange exchange) throws MolFormatException, SQLException {
         return MoleculeIOUtils.convertToMolecule(clob);
     }
-
-    @Converter
-    public static Molecule convert(Map map, String key, Exchange exchange) throws MolFormatException, SQLException {
-        return MoleculeIOUtils.convertToMolecule(map, key);
-    }
 }

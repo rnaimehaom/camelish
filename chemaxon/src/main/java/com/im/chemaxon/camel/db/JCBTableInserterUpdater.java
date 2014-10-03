@@ -123,7 +123,7 @@ public abstract class JCBTableInserterUpdater extends ConnectionHandlerService i
      *
      * @param uh The UpdateHandler to configure
      */
-    protected abstract void setValues(Exchange exchange, UpdateHandler updateHandler);
+    protected abstract void setValues(Exchange exchange, UpdateHandler updateHandler) throws SQLException;
 
     /**
      * Callback to allow values to be extracted from the UpdateHandler after the
@@ -136,4 +136,5 @@ public abstract class JCBTableInserterUpdater extends ConnectionHandlerService i
     protected void extractValues(Exchange exchange, UpdateHandler updateHandler) {
 
     }
+    
 }

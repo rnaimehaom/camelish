@@ -1,0 +1,20 @@
+// example drugbank.properties. Rename file and edit accordingly
+
+import chemaxon.jchem.db.TableTypeConstants
+
+
+db {
+    url='jdbc_url'
+    user='username'
+    password='password'
+    table='DRUGBANK_FEB_2014'
+    tableType=TableTypeConstants.TABLE_TYPE_MOLECULES
+    standardizer='src/misc/standardizer.xml'
+    extraColumnDefs=['DRUGBANK_ID CHAR(7)', 'DRUG_GROUPS VARCHAR(100)']
+}
+data {
+    // download drugbank from http://www.drugbank.ca/downloads
+    file='all.sdf'
+    path='/path/to/drugbank'
+    fields=[DRUGBANK_ID:String.class, DRUG_GROUPS:String.class]
+}

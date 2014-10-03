@@ -68,3 +68,70 @@ task wrapper(type: Wrapper) {
 }
 
 
+task drugbankCreateTables(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.DrugbankLoader'
+    args = ['createTables']
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task drugbankDropTables(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.DrugbankLoader'
+    args = ['dropTables']
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task drugbankLoadData(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.DrugbankLoader'
+    args = ['loadData']
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task drugbankReload(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.DrugbankLoader'
+    args = ['dropTables', 'createTables', 'loadData']
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+
+task molportCreateTables(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.MolportLoader'
+    args = ['createTables']
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task molportDropTables(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.MolportLoader'
+    args = ['dropTables']
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task molportLoadData(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.MolportLoader'
+    args = ['loadData']
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+
+task emoleculesCreateTables(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.EMoleculesLoader'
+    args = ['createTables']
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task emoleculesDropTables(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.EMoleculesLoader'
+    args = ['dropTables']
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task emoleculesLoadData(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.EMoleculesLoader'
+    args = ['loadData']
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task emoleculesReload(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.EMoleculesLoader'
+    args = ['dropTables', 'createTables', 'loadData']
+    classpath = sourceSets.main.runtimeClasspath
+}
