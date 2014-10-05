@@ -51,9 +51,9 @@ class MolportLoader extends AbstractLoader {
                     .handled(true)
                     .to('direct:errors')
             
-                    from('file:' + props.data.path + '?antInclude=*.gz')
+                    from('file:' + props.data.path + '?antInclude=*.sdf')
                     .log('Processing file ${header.CamelFileName}')
-                    .unmarshal().gzip()
+                    //.unmarshal().gzip()
                     .split().method(MoleculeIOUtils.class, 'mrecordIterator').streaming()
                     //.log('Processing line ${body}')
                     .process(updateHandlerProcessor)

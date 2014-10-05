@@ -55,8 +55,8 @@ class EMoleculesLoader extends AbstractLoader {
                 String data = exchange.in.getBody(String.class)
                 String[] vals = data.split(' ')
                 updateHandler.structure = vals[0]
-                updateHandler.setValueForAdditionalColumn(1, vals[1])
-                updateHandler.setValueForAdditionalColumn(2, vals[2])        
+                updateHandler.setValueForAdditionalColumn(1, exchange.getContext().getTypeConverter().convertTo(Integer.class, vals[1]))
+                updateHandler.setValueForAdditionalColumn(2, exchange.getContext().getTypeConverter().convertTo(Integer.class, vals[2]))  
             }
         }
 
@@ -72,7 +72,7 @@ class EMoleculesLoader extends AbstractLoader {
                     from('direct:start')
                     .unmarshal().gzip()
                     .split(body().tokenize("\n")).streaming()
-                    //.log('Processing line ${body}')
+                    //.log('Line: ${body}')
                     .process(updateHandlerProcessor)
                     .process(new ChunkBasedReporter(10000))
             

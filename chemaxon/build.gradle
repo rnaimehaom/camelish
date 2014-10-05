@@ -16,6 +16,7 @@ dependencies {
     
     compile "org.apache.derby:derby:10.10.1.1"
     compile "mysql:mysql-connector-java:5.1.13"
+    compile "org.postgresql:postgresql:9.3-1102-jdbc41"
 
     compile("com.chemaxon:jchem:$jchemVersion") {
         exclude group:'chemaxonlib',module:'batik-core'
