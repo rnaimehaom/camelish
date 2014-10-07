@@ -5,15 +5,13 @@ description = 'Camel tools for life sciences'
 apply plugin: 'idea'
 apply plugin: 'maven'
 
-//project.ext.set('camelVersion' : '2.13.0')
-camelVersion = "2.13.0"
-sourceCompatibility = 1.6
-def foobar = 'baz'
+project.ext.set('camelVersion', '2.13.0')
     
 allprojects {
     apply plugin: 'java'
     apply plugin: 'groovy'
     
+    sourceCompatibility = 1.7
     version = '0.1-SNAPSHOT'
 
     repositories {
@@ -33,6 +31,8 @@ allprojects {
 
         compile "org.apache.camel:camel-core:$camelVersion"
         compile "org.apache.camel:camel-jdbc:$camelVersion"
+        compile "org.apache.camel:camel-jetty:$camelVersion"
+        compile "org.apache.camel:camel-http4:$camelVersion"
         //compile "org.apache.camel:camel-csv:$camelVersion"
         //compile "org.apache.camel:camel-groovy:$camelVersion"
         //compile "org.apache.camel:camel-script:$camelVersion"

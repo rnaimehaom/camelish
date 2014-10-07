@@ -10,7 +10,7 @@ repositories {
 
 
 dependencies {
-    groovy "org.codehaus.groovy:groovy-all:2.2.2"
+    compile "org.codehaus.groovy:groovy-all:2.2.2"
 
     compile group: 'org.apache.camel', name: 'camel-core', version: camelVersion
 

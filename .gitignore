@@ -10,6 +10,4 @@ derby.log
 .nb-gradle-properties
 **/build/
 fabric8/profiles/lac/bioassay/curvefit/target
-loaders/drugbank.properties
-loaders/emolecules.properties
-loaders/molport.properties
+loaders/*.properties
