@@ -15,6 +15,8 @@ import chemaxon.struc.Molecule;
 import com.im.util.CollectionUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -52,6 +54,10 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
      * the MOLECULES options converted to a text in the format specified by the
      * outputFormat field. NOTE: this builds the entire String in memory so is
      * only suitable for small result sets.
+     * <br>
+     * STREAM generates an OutputStream and writes the structures as text to that
+     * stream. This is similar in nature to the TEXT option but suitable for large 
+     * numbers of structures.
      *
      */
     enum OutputMode {
@@ -60,7 +66,8 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
         CD_IDS,
         MAPS,
         MOLECULES,
-        TEXT
+        TEXT,
+        STREAM
     }
 
     /**
@@ -108,20 +115,19 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
         this.outputFormat = outputFormat;
     }
 
-    /**
-     * The interval at which the JChemSearch instance is polled for results
-     *
-     */
-    private int pollTime = 100;
-
-    public int getPollTime() {
-        return pollTime;
-    }
-
-    public void setPollTime(int pollTime) {
-        this.pollTime = pollTime;
-    }
-
+//    /**
+//     * The interval at which the JChemSearch instance is polled for results
+//     *
+//     */
+//    private int pollTime = 100;
+//
+//    public int getPollTime() {
+//        return pollTime;
+//    }
+//
+//    public void setPollTime(int pollTime) {
+//        this.pollTime = pollTime;
+//    }
     @Override
     protected void handleSearchParams(Exchange exchange, JChemSearch jcs) {
         String query = exchange.getIn().getBody(String.class);
@@ -146,6 +152,8 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
             case TEXT:
                 handleAsText(exchange, jcs);
                 break;
+            case STREAM:
+                handleAsStream(exchange, jcs);
             default:
                 throw new UnsupportedOperationException("Mode " + outputMode + " not yet supported");
         }
@@ -174,8 +182,10 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
     }
 
     /**
-     * Create an OutputStream of the molecules in the format specified by the
-     * outputFormat property
+     * Create the molecules as text in the format specified by the
+     * outputFormat property.
+     * Note: this is only suitable for relatively small numbers of molecules. 
+     * Use handleAsStream for large sets. 
      *
      * @param exchange
      * @param jcs
@@ -191,22 +201,48 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
         final Molecule[] mols = jcs.getHitsAsMolecules(jcs.getResults(), null, outputColumns, null);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         final MolExporter exporter = new MolExporter(out, outputFormat);
-        writeMoleculeToMolExporter(exporter, mols);
-        exchange.getOut().setBody(out.toString());
+        try {
+            writeMoleculesToMolExporter(exporter, mols);
+            exchange.getOut().setBody(out.toString());
+        } finally {
+            exporter.close();
+        }
     }
 
-    private void writeMoleculeToMolExporter(final MolExporter exporter, final Molecule[] mols) {
+    private void handleAsStream(final Exchange exchange, final JChemSearch jcs)
+            throws SQLException, IOException, SearchException, SupergraphException, PropertyNotSetException, DatabaseSearchException {
+
+        final Molecule[] mols = jcs.getHitsAsMolecules(jcs.getResults(), null, outputColumns, null);
+        final PipedInputStream pis = new PipedInputStream();
+        final PipedOutputStream out = new PipedOutputStream(pis);
+        final MolExporter exporter = new MolExporter(out, outputFormat);
+
+        new Thread(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            writeMoleculesToMolExporter(exporter, mols);
+                        } catch (IOException e) {
+                            LOG.log(Level.SEVERE, "Error writing molecules", e);
+                        } finally {
+
+                            try {
+                                exporter.close();
+                            } catch (IOException ex) {
+                                LOG.log(Level.SEVERE, "Error closing MolExporter", ex);
+                            }
+                        }
+                    }
+
+                }).start();
+
+        exchange.getOut().setBody(pis);
+    }
+
+    private void writeMoleculesToMolExporter(final MolExporter exporter, final Molecule[] mols) throws IOException {
         for (Molecule mol : mols) {
-            try {
-                exporter.write(mol);
-            } catch (IOException ex) {
-                LOG.log(Level.SEVERE, "Failed to write Molecule " + mol + " to stream", ex);
-            }
-        }
-        try {
-            exporter.close();
-        } catch (IOException ex) {
-            LOG.log(Level.SEVERE, "Failed to close MolExporter", ex);
+            exporter.write(mol);
         }
     }
 }
