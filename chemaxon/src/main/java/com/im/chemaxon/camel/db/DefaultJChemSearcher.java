@@ -10,6 +10,8 @@ import chemaxon.formats.MolExporter;
 import chemaxon.jchem.db.DatabaseSearchException;
 import chemaxon.jchem.db.JChemSearch;
 import chemaxon.jchem.db.PropertyNotSetException;
+import chemaxon.sss.SearchConstants;
+import chemaxon.sss.search.JChemSearchOptions;
 import chemaxon.sss.search.SearchException;
 import chemaxon.struc.Molecule;
 import com.im.util.CollectionUtils;
@@ -34,6 +36,8 @@ import org.apache.camel.Exchange;
 public class DefaultJChemSearcher extends AbstractJChemSearcher {
 
     private final static Logger LOG = Logger.getLogger(DefaultJChemSearcher.class.getName());
+    
+    public static final String HEADER_SEARCH_OPTIONS = "JChemSearchOptions";
 
     /**
      * The different types of output that can be generated.
@@ -127,12 +131,29 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
 //
 //    public void setPollTime(int pollTime) {
 //        this.pollTime = pollTime;
-//    }
+//    
+    
+    
+    /** Sets the search options based on what is specified in the HEADER_SEARCH_OPTIONS 
+     * if present, or the defaults provided by the searchOptions if not.
+     * 
+     * @param exchange
+     * @param jcs 
+     */
     @Override
     protected void handleSearchParams(Exchange exchange, JChemSearch jcs) {
-        String query = exchange.getIn().getBody(String.class);
-        jcs.setQueryStructure(query);
-        jcs.setRunMode(JChemSearch.RUN_MODE_SYNCH_COMPLETE);
+        
+        String headerOpts = exchange.getIn().getHeader(HEADER_SEARCH_OPTIONS, String.class);
+        if (headerOpts != null) {
+            LOG.log(Level.INFO, "Using search options from header: {0}", headerOpts);
+            JChemSearchOptions opts = new JChemSearchOptions();
+            opts.setOptions(headerOpts);
+            jcs.setSearchOptions(opts);
+        } else {
+            super.handleSearchParams(exchange, jcs);
+        }
+        String opts = jcs.getSearchOptions().toString();
+        LOG.log(Level.INFO, "Executing search using options: {0}", opts);
     }
 
     @Override
@@ -154,6 +175,7 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
                 break;
             case STREAM:
                 handleAsStream(exchange, jcs);
+                break;
             default:
                 throw new UnsupportedOperationException("Mode " + outputMode + " not yet supported");
         }

@@ -57,9 +57,6 @@ public abstract class AbstractJChemSearcher extends ConnectionHandlerService imp
         JChemSearch j = new JChemSearch();
         j.setStructureTable(structureTable);
         j.setConnectionHandler(getConnectionHandler());
-        JChemSearchOptions opts = new JChemSearchOptions(SearchConstants.SUBSTRUCTURE);
-        opts.setOptions(searchOptions);
-        j.setSearchOptions(opts);
         configureJChemSearch(j);
         return j;
     }
@@ -71,11 +68,30 @@ public abstract class AbstractJChemSearcher extends ConnectionHandlerService imp
     @Override
     public void process(Exchange exchange) throws Exception {
         handleSearchParams(exchange, jcs);
+        handleQueryStructure(exchange, jcs);
+        jcs.setRunMode(JChemSearch.RUN_MODE_SYNCH_COMPLETE);
         jcs.setRunning(true);
         handleSearchResults(exchange, jcs);
     }
 
-    protected abstract void handleSearchParams(Exchange exchange, JChemSearch jcs);
+    protected void handleQueryStructure(Exchange exchange, JChemSearch jcs) {
+        Object body = exchange.getIn().getBody();
+        if (body instanceof chemaxon.struc.Molecule)  {
+           jcs.setQueryStructure((chemaxon.struc.Molecule)body);
+        } else {
+            String query = exchange.getIn().getBody(String.class);
+            jcs.setQueryStructure(query);
+        }
+    }
+
+    protected void handleSearchParams(Exchange exchange, JChemSearch jcs) {
+        JChemSearchOptions opts = new JChemSearchOptions(SearchConstants.SUBSTRUCTURE);
+        if (searchOptions != null) {
+            LOG.info("Setting default search options to " + searchOptions);
+            opts.setOptions(searchOptions);
+        }
+        jcs.setSearchOptions(opts);
+    }
 
     protected abstract void handleSearchResults(Exchange exchange, JChemSearch jcs) throws Exception;
 }
