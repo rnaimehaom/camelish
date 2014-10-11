@@ -10,7 +10,6 @@ import chemaxon.formats.MolExporter;
 import chemaxon.jchem.db.DatabaseSearchException;
 import chemaxon.jchem.db.JChemSearch;
 import chemaxon.jchem.db.PropertyNotSetException;
-import chemaxon.sss.SearchConstants;
 import chemaxon.sss.search.JChemSearchOptions;
 import chemaxon.sss.search.SearchException;
 import chemaxon.struc.Molecule;
@@ -36,7 +35,7 @@ import org.apache.camel.Exchange;
 public class DefaultJChemSearcher extends AbstractJChemSearcher {
 
     private final static Logger LOG = Logger.getLogger(DefaultJChemSearcher.class.getName());
-    
+
     public static final String HEADER_SEARCH_OPTIONS = "JChemSearchOptions";
 
     /**
@@ -59,9 +58,9 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
      * outputFormat field. NOTE: this builds the entire String in memory so is
      * only suitable for small result sets.
      * <br>
-     * STREAM generates an OutputStream and writes the structures as text to that
-     * stream. This is similar in nature to the TEXT option but suitable for large 
-     * numbers of structures.
+     * STREAM generates an OutputStream and writes the structures as text to
+     * that stream. This is similar in nature to the TEXT option but suitable
+     * for large numbers of structures.
      *
      */
     enum OutputMode {
@@ -132,37 +131,51 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
 //    public void setPollTime(int pollTime) {
 //        this.pollTime = pollTime;
 //    
-    
-    
-    /** Sets the search options based on what is specified in the HEADER_SEARCH_OPTIONS 
-     * if present, or the defaults provided by the searchOptions if not.
-     * 
+    /**
+     * Sets the search options based on what is specified in the
+     * HEADER_SEARCH_OPTIONS if present, or the defaults provided by the
+     * searchOptions if not.
+     *
      * @param exchange
-     * @param jcs 
+     * @param jcs
      */
     @Override
     protected void handleSearchParams(Exchange exchange, JChemSearch jcs) {
-        
+
         String headerOpts = exchange.getIn().getHeader(HEADER_SEARCH_OPTIONS, String.class);
         if (headerOpts != null) {
             LOG.log(Level.INFO, "Using search options from header: {0}", headerOpts);
-            JChemSearchOptions opts = new JChemSearchOptions();
+            JChemSearchOptions opts = new JChemSearchOptions(JChemSearch.SUBSTRUCTURE);
             opts.setOptions(headerOpts);
             jcs.setSearchOptions(opts);
         } else {
             super.handleSearchParams(exchange, jcs);
         }
-        String opts = jcs.getSearchOptions().toString();
-        LOG.log(Level.INFO, "Executing search using options: {0}", opts);
+    }
+
+    @Override
+    protected void startSearch(JChemSearch jcs) throws Exception {
+
+        switch (outputMode) {
+            case STREAM:
+                jcs.setOrder(JChemSearch.NO_ORDERING);
+                jcs.setRunMode(JChemSearch.RUN_MODE_ASYNCH_PROGRESSIVE);
+                jcs.setRunning(true);
+                LOG.info("Search started");
+                break;
+            default:
+                super.startSearch(jcs);
+        }
     }
 
     @Override
     protected void handleSearchResults(Exchange exchange, JChemSearch jcs) throws Exception {
         // TOOD - work out how to best stream the results - various complications here, 
-        // such as similarity saerch not supporting asynch mode 
+        // such as similarity search not supporting asynch mode 
         switch (outputMode) {
             case RAW:
-                exchange.getOut().setBody(jcs.getResults());
+                int[] hits = jcs.getResults();
+                exchange.getOut().setBody(hits);
                 break;
             case CD_IDS:
                 exchange.getOut().setBody(getHitsAsList(jcs));
@@ -204,10 +217,9 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
     }
 
     /**
-     * Create the molecules as text in the format specified by the
-     * outputFormat property.
-     * Note: this is only suitable for relatively small numbers of molecules. 
-     * Use handleAsStream for large sets. 
+     * Create the molecules as text in the format specified by the outputFormat
+     * property. Note: this is only suitable for relatively small numbers of
+     * molecules. Use handleAsStream for large sets.
      *
      * @param exchange
      * @param jcs
@@ -234,7 +246,6 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
     private void handleAsStream(final Exchange exchange, final JChemSearch jcs)
             throws SQLException, IOException, SearchException, SupergraphException, PropertyNotSetException, DatabaseSearchException {
 
-        final Molecule[] mols = jcs.getHitsAsMolecules(jcs.getResults(), null, outputColumns, null);
         final PipedInputStream pis = new PipedInputStream();
         final PipedOutputStream out = new PipedOutputStream(pis);
         final MolExporter exporter = new MolExporter(out, outputFormat);
@@ -244,8 +255,21 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
                     @Override
                     public void run() {
                         try {
-                            writeMoleculesToMolExporter(exporter, mols);
-                        } catch (IOException e) {
+                            if (jcs.getRunMode() == JChemSearch.RUN_MODE_ASYNCH_PROGRESSIVE) {
+                                // async mode - this will be the norm
+                                while (jcs.hasMoreHits()) {
+                                    int[] hits = jcs.getAvailableNewHits(1);
+                                    LOG.log(Level.FINER, "Processing {0} hits", hits.length);
+                                    Molecule[] mols = jcs.getHitsAsMolecules(hits, null, outputColumns, null);
+                                    writeMoleculesToMolExporter(exporter, mols);
+                                }
+                            } else {
+                                // just in case we also handle sync mode
+                                Molecule[] mols = jcs.getHitsAsMolecules(jcs.getResults(), null, outputColumns, null);
+                                LOG.log(Level.FINER, "Processing {0} hits", mols.length);
+                                writeMoleculesToMolExporter(exporter, mols);
+                            }
+                        } catch (InterruptedException | DatabaseSearchException | SQLException | IOException | SearchException | SupergraphException | PropertyNotSetException e) {
                             LOG.log(Level.SEVERE, "Error writing molecules", e);
                         } finally {
 

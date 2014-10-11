@@ -1,6 +1,5 @@
 package com.im.chemaxon.examples.jchemsearch
 
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource
 import org.apache.camel.CamelContext
 import org.apache.camel.Exchange
 import org.apache.camel.ProducerTemplate
@@ -21,7 +20,7 @@ SimpleRegistry registry = new SimpleRegistry()
 registry.put('mydb', ds)
 
 def dbSearcher = new DefaultJChemSearcher()
-dbSearcher.searchOptions = 't:s'
+dbSearcher.searchOptions = 't:d'
 dbSearcher.structureTable = 'DRUGBANK_FEB_2014'
 dbSearcher.connection = ds.getConnection()
 dbSearcher.outputMode = DefaultJChemSearcher.OutputMode.STREAM
@@ -32,6 +31,9 @@ camelContext.addRoutes(new RouteBuilder() {
         def void configure() {
 
             from('jetty:http://0.0.0.0:8080/chemsearch/drugbank')
+            // Jetty uses stream so body can only be read once.
+            // So to avoid problems grab it as a String immediately
+            .convertBodyTo(String.class) 
             .log('Processing search for ${body}')
             .setHeader(Exchange.CONTENT_TYPE, constant("text/plain")) 
             .process(dbSearcher)
@@ -44,10 +46,11 @@ println "Services started"
 
 // run search to load the structure cache
 ProducerTemplate t = camelContext.createProducerTemplate()
-def out1 = t.requestBody('http://localhost:8080/chemsearch/drugbank', 'CCCc1ccncc1CCC')
+def out1 = t.requestBodyAndHeader('http://localhost:8080/chemsearch/drugbank', 'C1=CCCNC1', 
+    DefaultJChemSearcher.HEADER_SEARCH_OPTIONS, 't:s')
+
 println "Results 1:\n$out1"
-def out2 = t.requestBodyAndHeader('http://localhost:8080/chemsearch/drugbank', 'OC(=O)C1=CCCNC1', 
-    DefaultJChemSearcher.HEADER_SEARCH_OPTIONS, 'sep=, t:d,exactStereoSearch:n')
+def out2 = t.requestBody('http://localhost:8080/chemsearch/drugbank', 'OC(=O)C1=CCCNC1')
 println "Results 2:\n$out2"
 println "finished"
 

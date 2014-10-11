@@ -69,17 +69,32 @@ public abstract class AbstractJChemSearcher extends ConnectionHandlerService imp
     public void process(Exchange exchange) throws Exception {
         handleSearchParams(exchange, jcs);
         handleQueryStructure(exchange, jcs);
+        String opts = jcs.getSearchOptions().toString();
+        LOG.log(Level.INFO, "Executing search using options: {0}", opts);
+        startSearch(jcs);
+        handleSearchResults(exchange, jcs);
+    }
+
+    protected void startSearch(JChemSearch jcs) throws Exception {
         jcs.setRunMode(JChemSearch.RUN_MODE_SYNCH_COMPLETE);
         jcs.setRunning(true);
-        handleSearchResults(exchange, jcs);
+        LOG.info("Search complete");
     }
 
     protected void handleQueryStructure(Exchange exchange, JChemSearch jcs) {
         Object body = exchange.getIn().getBody();
-        if (body instanceof chemaxon.struc.Molecule)  {
-           jcs.setQueryStructure((chemaxon.struc.Molecule)body);
+        if (body == null) {
+            throw new IllegalArgumentException("Query structure must be specified as body");
+        }
+        if (body instanceof chemaxon.struc.Molecule) {
+            jcs.setQueryStructure((chemaxon.struc.Molecule) body);
         } else {
-            String query = exchange.getIn().getBody(String.class);
+            String query;
+            if (body instanceof String) {
+                query = (String) body;
+            } else {
+                query = exchange.getContext().getTypeConverter().convertTo(String.class, body);
+            }
             jcs.setQueryStructure(query);
         }
     }
@@ -87,7 +102,7 @@ public abstract class AbstractJChemSearcher extends ConnectionHandlerService imp
     protected void handleSearchParams(Exchange exchange, JChemSearch jcs) {
         JChemSearchOptions opts = new JChemSearchOptions(SearchConstants.SUBSTRUCTURE);
         if (searchOptions != null) {
-            LOG.info("Setting default search options to " + searchOptions);
+            LOG.log(Level.INFO, "Setting default search options to {0}", searchOptions);
             opts.setOptions(searchOptions);
         }
         jcs.setSearchOptions(opts);
