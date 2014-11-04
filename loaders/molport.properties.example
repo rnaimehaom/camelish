@@ -2,17 +2,15 @@
 
 import chemaxon.jchem.db.TableTypeConstants
 
-db {
-    url='jdbc_url'
-    user='username'
-    password='password'
-    table='MOLPORT_JUN_2014_XXX'
-    tableType=TableTypeConstants.TABLE_TYPE_MOLECULES
-    standardizer='src/misc/standardizer.xml'
-    extraColumnDefs=['REGID VARCHAR(32)']
-}
-data {
-    // you need to register with MolPort to get a login ID to allow to download
-    path='/path/to/molport'
-    fields=[PUBCHEM_EXT_DATASOURCE_REGID:String.class]
-}
+user='vendordbs'
+password='vendordbs'
+schema='vendordbs'
+table='MOLPORT_SEP_2014'
+tableType=TableTypeConstants.TABLE_TYPE_MOLECULES
+standardizer='src/misc/standardizer.xml'
+extraColumnDefs=['REGID VARCHAR(32)']
+
+// you need to register with MolPort to get a login ID to allow to download
+path='/home/timbo/data/structures/molport/AllAvailableCompounds'
+fields=[PUBCHEM_EXT_DATASOURCE_REGID:String.class]
+

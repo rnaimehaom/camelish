@@ -1,0 +1,22 @@
+apply plugin: 'maven'
+
+group = 'im.camelish'
+description = 'Camelish BioAssay extensions'
+
+dependencies {
+
+    project(':core')
+
+    testCompile project(':core-test')
+
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            // hard coded URL as Jenkins puts things to there.
+            // If you want to run this locally then make sure that directory exists. 
+            repository(url: "file:///var/maven_repo/repo/")
+        }
+    }
+}

@@ -1,0 +1,7 @@
+allowRecreate=true // set to false to prevent accidental re-creation
+schema = 'chemcentral'
+user='chemcentral'
+password='chemcentral'
+standardizer='src/misc/standardizer.xml'
+processors=4
+

@@ -2,18 +2,18 @@
 
 import chemaxon.jchem.db.TableTypeConstants
 
-db {
-    url='jdbc_url'
-    user='username'
-    password='password'
-    table='EMOLECULES_MAY_2014_XXX'
-    tableType=TableTypeConstants.TABLE_TYPE_MOLECULES
-    standardizer='src/misc/standardizer.xml'
-    extraColumnDefs=['VERSION_ID INTEGER', 'PARENT_ID INTEGER']
-}
-data {
-    // download eMoelcules from http://emolecules.com/info/plus/download-database
-    file='emolecules-May2014.smi.gz'
-    path='/Users/timbo/data/structures/emolecules'
-    fields=[PUBCHEM_EXT_DATASOURCE_REGID:String.class]
-}
+user='vendordbs'
+password='vendordbs'
+schema='vendordbs'
+//table='EMOLECULES_PLUS_OCT_2014'
+table='emolecules_medium'
+tableType=TableTypeConstants.TABLE_TYPE_MOLECULES
+standardizer='src/misc/standardizer.xml'
+extraColumnDefs=['VERSION_ID INTEGER', 'PARENT_ID INTEGER']
+processors=4
+
+// download eMolecules from http://emolecules.com/info/plus/download-database
+file='medium.smi'
+//file='plus.smi.gz'
+path='/home/timbo/data/structures/emolecules'
+
