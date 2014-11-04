@@ -119,7 +119,7 @@ class ChemblStructuresETL extends AbstractLoader  {
   source_description VARCHAR(500),
   type CHAR(1) NOT NULL,
   active BOOLEAN  DEFAULT TRUE,
-  CONSTRAINT fk_sources2categories FOREIGN KEY (category_id) references categories(id),
+  CONSTRAINT fk_sources2categories FOREIGN KEY (category_id) references ''' + props.schema + ''' .categories(id),
   CONSTRAINT uq_source_name UNIQUE (source_name)
 )''')
   
@@ -131,7 +131,7 @@ class ChemblStructuresETL extends AbstractLoader  {
   parent_id integer,
   property_id integer NOT NULL,
   property_data jsonb,
-  constraint fk_sp2sources FOREIGN KEY (source_id) references sources(id) ON DELETE CASCADE
+  constraint fk_sp2sources FOREIGN KEY (source_id) references ''' + props.schema + ''' .sources(id) ON DELETE CASCADE
 );''')
     
                 execute(db, 'add index idx_sp_source_id',     'CREATE INDEX idx_sp_source_id on ' + props.schema + '.structure_props(source_id)')
