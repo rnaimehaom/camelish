@@ -35,16 +35,16 @@ class ChemblStructuresETL extends AbstractLoader  {
     static void main(String[] args) {
         println "Running with $args"
         
-        def instance = new ChemblStructuresETL('loaders/chemcentral.properties', 0, 10000000)
+        def instance = new ChemblStructuresETL('loaders/chemcentral.properties')
         instance.run(['dropTables','createTables', 'loadData'] as String[])
        
     }
     
-    ChemblStructuresETL(String config, int offset, int limit) {
+    ChemblStructuresETL(String config) {
         super(new File(config).toURL())
         chembl = createConfig('loaders/chembl.properties')
-        this.offset = offset
-        this.limit = limit
+        this.offset = chembl.offset
+        this.limit = chembl.limit
         this.structureTable = props.schema + '.structures'
     }
     
@@ -163,11 +163,13 @@ values (1, 'CHEMBL', 'ChEMBL 19', 'P', 'Y')''')
         println "Loading data from ${chembl.schema}.compound_structures"
         ProducerTemplate t = camelContext.createProducerTemplate()
 
+        // Note: we are using LIMIT without and ORDER BY so if a meaningful limit is
+        // specified rows retreived may not be repeatable between runs
         t.sendBody('direct:chemblmolquery', """
-SELECT molregno, molfile
-FROM ${chembl.schema}.compound_structures
-ORDER BY molregno
-LIMIT $limit OFFSET $offset 
+SELECT st.molregno, st.molfile, cl.chembl_id
+FROM ${chembl.schema}.compound_structures st\n\
+JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.entity_type = 'COMPOUND'
+LIMIT $limit 
 """)
         
     }
@@ -240,10 +242,10 @@ LIMIT $limit OFFSET $offset
                     from('direct:chemcentralpropsload')
                     .setHeader('sid', simple('${body[cd_id]}'))
                     .setHeader('molregno', simple('${body[molregno]}'))
-                    //.setHeader('chembl_id', simple('${body[chembl_id]}'))
+                    .setHeader('cid', simple('${body[chembl_id]}'))
                     .setBody(constant("""insert into ${props.schema}.structure_props
                         (structure_id, source_id, batch_id, property_id, property_data)
-                        select :?sid, 1, activity_id, assay_id, row_to_json(activities)::jsonb
+                        select :?sid, 1, :?cid, assay_id, row_to_json(activities)::jsonb
                         from ${chembl.schema}.activities where molregno = :?molregno"""))
                     //.log('SQL: ${body}')
                     .to('jdbc:chemcentral?useHeadersAsParameters=true')

@@ -1,3 +1,5 @@
 user='chembl'
 password='chembl'
 schema='chembl_19'
+offset=0
+limit=5000000
