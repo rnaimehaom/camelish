@@ -117,7 +117,7 @@ class EMoleculesLoader extends AbstractLoader {
                  
                    
                     from('seda:report')
-                    .process(new ChunkBasedReporter(1000))
+                    .process(new ChunkBasedReporter(10000))
                     
             
                     from('direct:errors')
