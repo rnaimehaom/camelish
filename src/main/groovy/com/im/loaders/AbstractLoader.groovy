@@ -9,11 +9,13 @@ package com.im.loaders
 import chemaxon.jchem.db.StructureTableOptions
 import chemaxon.util.ConnectionHandler
 import java.sql.*
+import javax.sql.DataSource
 import org.apache.camel.CamelContext
 import org.apache.camel.impl.DefaultCamelContext
 
 import chemaxon.jchem.db.*
 import chemaxon.util.ConnectionHandler
+import groovy.sql.Sql
 
 /**
  *
@@ -21,85 +23,102 @@ import chemaxon.util.ConnectionHandler
  */
 class AbstractLoader {
     
+    ConfigObject database;
     ConfigObject props;
+  
+    DataSource dataSource
+    String tableName
     
-    
-    AbstractLoader(String config) {
-        props = new ConfigSlurper().parse(new File(config).text)
+    AbstractLoader(URL config) {
+        
+        database = createConfig('loaders/database.properties')
+        props = createConfig(config)
+        validate()
+        dataSource = createDataSource()
+        tableName = props.schema + '.' + props.table
     }
     
-    void validate(String[] args, def props) {
-        assert props.db.url  != null
-        assert props.db.table  != null
+    static ConfigObject createConfig(String path) {
+        return createConfig(new File(path).toURL())
+    }
+    
+    static ConfigObject createConfig(URL url) {
+        return new ConfigSlurper().parse(url)
+    }
+    
+    void validate() {
+        assert props.schema != null
+        assert props.table != null
     }
     
     void run(String[] args) {
         
-        validate(args, props)
+        println "Validating ..."
 
-        Connection con = createConnection(props)
-        try {
-            args.each {
-                doAction(it, props, con)
-            }
-        } finally {
-            con.close()
+
+        args.each {
+            doAction(it, props)
         }
     }
     
-    boolean doAction(String action, def props, Connection con) {
+    boolean doAction(String action, def props) {
         if (action == 'createTables') {
-            createTables(props, con)
+            createTables(props)
             return true
         } else if (action == 'dropTables') {
-            dropTables(props, con)
+            dropTables(props)
             return true
         } else if (action == 'loadData') {
-            loadData(props, con)
+            loadData(props)
             return true
         }
         return false
     }
-    
-    Connection createConnection(def props) {
-        return DriverManager.getConnection(props.db.url, props.db.user, props.db.password)
+
+    ConnectionHandler createConnectionHandler() {
+        return new ConnectionHandler(dataSource.getConnection(), props.schema + '.jchemproperties')
     }
     
-    void dropTables(def props, Connection con) {
+    
+    void dropTables(def props) {
         println "Dropping tables"
-        ConnectionHandler conh = new ConnectionHandler(con, 'JCHEMPROPERTIES')
-        if (UpdateHandler.isStructureTable(conh, props.db.table)) {
-            UpdateHandler.dropStructureTable(conh, props.db.table)
+        ConnectionHandler conh = createConnectionHandler()
+        if (UpdateHandler.isStructureTable(conh, tableName)) {
+            UpdateHandler.dropStructureTable(conh, tableName)
         }
     }
     
-    void createTables(def props, Connection con) {
+    void createTables(def props) {
         println "Creating tables"
         String szr = null
-        if (props.db.standardizer) {
-            szr = new File(props.db.standardizer).text
+        if (props.standardizer) {
+            szr = new File(props.standardizer).text
         }
-        ConnectionHandler conh = new ConnectionHandler(con, 'JCHEMPROPERTIES')
+        ConnectionHandler conh = createConnectionHandler()
         if (!DatabaseProperties.propertyTableExists(conh)) {
             DatabaseProperties.createPropertyTable(conh)    
         }
 
-        StructureTableOptions opts = new StructureTableOptions(props.db.table, props.db.tableType)
-        opts.extraColumnDefinitions = props.db.extraColumnDefs.join(',')
+        StructureTableOptions opts = new StructureTableOptions(tableName, props.tableType)
+        opts.extraColumnDefinitions = props.extraColumnDefs.join(',')
         opts.standardizerConfig = szr
         UpdateHandler.createStructureTable(conh, opts)
     }
     
         
-    void loadData(def props, Connection con) {
+    void loadData(def props) {
         
-        CamelContext context = new DefaultCamelContext()
-        createRoutes(context, con)
+        CamelContext context = createCamelContext()
+        createRoutes(context)
         context.start()
 
-        executeRoutes(context, con)
+        executeRoutes(context)
 
         context.stop()
+    }
+    
+    CamelContext createCamelContext() {
+        return new DefaultCamelContext()
     }
     
     List<String> getColumnNamesFromColumnDefs(List defs) {
@@ -112,5 +131,19 @@ class AbstractLoader {
         return result
     }
 	
-}
 
+    void executeMayFail(Sql db, String desc, String sql) {
+        println desc
+        try {
+            db.execute(sql)
+        } catch (SQLException ex) {
+            println "Execution failed: ${ex.message}"
+        }
+    }
+
+    void execute(Sql db, String desc, String sql) {
+        println desc
+        db.execute(sql)
+    }
+
+}

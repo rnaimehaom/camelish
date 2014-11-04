@@ -49,9 +49,7 @@ ProducerTemplate t = camelContext.createProducerTemplate()
 def out1 = t.requestBodyAndHeader('http://localhost:8080/chemsearch/drugbank', 'C1=CCCNC1', 
     DefaultJChemSearcher.HEADER_SEARCH_OPTIONS, 't:s')
 
-println "Results 1:\n$out1"
-def out2 = t.requestBody('http://localhost:8080/chemsearch/drugbank', 'OC(=O)C1=CCCNC1')
-println "Results 2:\n$out2"
-println "finished"
+
+println "Finished"
 
 synchronized (this) { this.wait() }

@@ -63,7 +63,7 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
      * for large numbers of structures.
      *
      */
-    enum OutputMode {
+    public enum OutputMode {
 
         RAW,
         CD_IDS,
@@ -161,7 +161,6 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
                 jcs.setOrder(JChemSearch.NO_ORDERING);
                 jcs.setRunMode(JChemSearch.RUN_MODE_ASYNCH_PROGRESSIVE);
                 jcs.setRunning(true);
-                LOG.info("Search started");
                 break;
             default:
                 super.startSearch(jcs);

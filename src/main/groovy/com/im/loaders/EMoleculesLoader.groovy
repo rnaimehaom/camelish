@@ -9,11 +9,14 @@ import com.im.chemaxon.camel.db.DefaultJCBInserter
 import com.im.chemaxon.camel.db.JCBTableInserterUpdater
 import groovy.sql.Sql
 import java.sql.*
+import javax.sql.DataSource
 import org.apache.camel.CamelContext
+import org.apache.camel.Endpoint
 import org.apache.camel.Exchange
 import org.apache.camel.ProducerTemplate
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.impl.DefaultCamelContext
+import org.postgresql.ds.PGSimpleDataSource
 
 /**
  *
@@ -28,27 +31,26 @@ class EMoleculesLoader extends AbstractLoader {
     }
     
     EMoleculesLoader(String config) {
-        super(config)
+        super(new File(config).toURL())
     }
     
-    void executeRoutes(CamelContext camelContext, Connection con) {
-        println "Loading file ${props.data.path}/${props.data.file}"
-        ProducerTemplate t = camelContext.createProducerTemplate()
-        t.sendBody('direct:start', new File(props.data.path + '/' + props.data.file))
-                                           
-        sleep(100)
-
-        Sql db = new Sql(con)
-        int rows = db.firstRow('select count(*) from ' + props.db.table)[0]
-        println "Found $rows rows"
-    }
-    
-    void createRoutes(CamelContext camelContext, Connection con) {
+    DataSource createDataSource() {
+        PGSimpleDataSource ds = new PGSimpleDataSource()
+        ds.serverName = database.server
+        ds.portNumber = database.port
+        ds.databaseName = database.database
+        ds.user = props.user
+        ds.password = props.password
         
-        String cols = getColumnNamesFromColumnDefs(props.db.extraColumnDefs).join(',')
-
+        return ds
+    }
+    
+    JCBTableInserterUpdater createInserter() {
+        
+        String cols = getColumnNamesFromColumnDefs(props.extraColumnDefs).join(',')
+        
         JCBTableInserterUpdater updateHandlerProcessor = new JCBTableInserterUpdater(
-            UpdateHandler.INSERT, props.db.table, cols) {
+            UpdateHandler.INSERT, props.schema + '.' + props.table, cols) {
 
             @Override
             protected void setValues(Exchange exchange, UpdateHandler updateHandler) {
@@ -60,26 +62,73 @@ class EMoleculesLoader extends AbstractLoader {
             }
         }
 
-        ConnectionHandler conh = new ConnectionHandler(con, 'JCHEMPROPERTIES')
+        ConnectionHandler conh = new ConnectionHandler(dataSource.getConnection(), props.schema + '.jchemproperties')
         updateHandlerProcessor.connectionHandler = conh
         
+        return updateHandlerProcessor
+    }
+    
+    void executeRoutes(CamelContext camelContext) {
+        println "Loading file ${props.path}/${props.file}"
+        ProducerTemplate t = camelContext.createProducerTemplate()
+        t.sendBody('direct:start', new File(props.path + '/' + props.file))
+                                           
+        sleep(100)
+
+        Sql db = new Sql(dataSource.getConnection())
+        int rows = db.firstRow('select count(*) from ' + props.schema + '.' + props.table)[0]
+        println "Found $rows rows"
+    }
+    
+    void createRoutes(CamelContext camelContext) {
+        
+        
+        
         camelContext.addRoutes(new RouteBuilder() {
+                
+            
                 def void configure() {
+                    
+                    def numbers = 1..props.processors
+                    
+                    List<Endpoint> endpoints = []
+                    numbers.each {
+                        endpoints << endpoint("seda:processor${it}?size=5&blockWhenFull=true")
+                    }
+                    
+                    endpoints.each {
+                        from(it)
+                        .process(createInserter())
+                        .to('seda:report')
+                    }
+                    
+                    
                     onException()
                     .handled(true)
                     .to('direct:errors')
-            
+                    
+                    
+                    
+                    
                     from('direct:start')
-                    .unmarshal().gzip()
+                    //.unmarshal().gzip()
                     .split(body().tokenize("\n")).streaming()
-                    //.log('Line: ${body}')
-                    .process(updateHandlerProcessor)
-                    .process(new ChunkBasedReporter(10000))
+                    //.log('Input: ${body}')
+                    .loadBalance().roundRobin().to(
+                        endpoints
+                    )      
+                 
+                   
+                    from('seda:report')
+                    .process(new ChunkBasedReporter(1000))
+                    
             
                     from('direct:errors')
                     .log('Error: ${body}')
+                    .log('Message: ${exception.message}')
+                    //.log('stacktrace: ${exception.stacktrace}')
                     .transform(body().append('\n'))
-                    .to('file:' + props.data.path + '?fileExist=Append&fileName=' + props.data.file + '_errrors')
+                    .to('file:' + props.path + '?fileExist=Append&fileName=' + props.file + '_errrors')
                 }
             })
     }

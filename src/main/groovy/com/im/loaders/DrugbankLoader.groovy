@@ -9,11 +9,13 @@ import com.im.chemaxon.camel.db.DefaultJCBInserter
 import com.im.chemaxon.camel.db.JCBTableInserterUpdater
 import groovy.sql.Sql
 import java.sql.*
+import javax.sql.DataSource
 import org.apache.camel.CamelContext
 import org.apache.camel.Exchange
 import org.apache.camel.ProducerTemplate
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.impl.DefaultCamelContext
+import org.postgresql.ds.PGSimpleDataSource
 
 /**
  *
@@ -22,32 +24,46 @@ import org.apache.camel.impl.DefaultCamelContext
 class DrugbankLoader extends AbstractLoader {
    
     static void main(String[] args) {
-        println "Running with $args"
+        println "Running with args: $args"
         def instance = new DrugbankLoader('loaders/drugbank.properties')
         instance.run(args)
     }
     
     DrugbankLoader(String config) {
-        super(config)
+        super(new File(config).toURL())
     }
     
-    void executeRoutes(CamelContext camelContext, Connection con) {
+    DataSource createDataSource() {
+        PGSimpleDataSource ds = new PGSimpleDataSource()
+        ds.serverName = database.server
+        ds.portNumber = database.port
+        ds.databaseName = database.database
+        ds.user = props.user
+        ds.password = props.password
+        
+        return ds
+    }
+    
+    void executeRoutes(CamelContext camelContext) {
         ProducerTemplate t = camelContext.createProducerTemplate()
-        t.sendBody('direct:start', new File(props.data.path + '/' + props.data.file))
+        String file = props.path + '/' + props.file
+        println "Loading file $file"
+        t.sendBody('direct:start', new File(file))
+        println "Finished loading"
                               
-        Sql db = new Sql(con)
-        int rows = db.firstRow('select count(*) from ' + props.db.table)[0]
+        Sql db = new Sql(dataSource.getConnection())
+        int rows = db.firstRow('select count(*) from ' + props.schema + '.' + props.table)[0]
         println "Table now has $rows rows"
     }
     
-    void createRoutes(CamelContext camelContext, Connection con) {
-        final String cols = getColumnNamesFromColumnDefs(props.db.extraColumnDefs).join(',')
+    void createRoutes(CamelContext camelContext) {
+        final String cols = getColumnNamesFromColumnDefs(props.extraColumnDefs).join(',')
         //println "extracols = $cols"
 
         JCBTableInserterUpdater updateHandlerProcessor = new DefaultJCBInserter(
-            props.db.table, cols, props.data.fields)
+            props.schema + '.' + props.table, cols, props.fields)
 
-        ConnectionHandler conh = new ConnectionHandler(con, 'JCHEMPROPERTIES')
+        ConnectionHandler conh = new ConnectionHandler(dataSource.getConnection(), props.schema + '.jchemproperties')
         updateHandlerProcessor.connectionHandler = conh
         
         camelContext.addRoutes(new RouteBuilder() {
@@ -66,7 +82,7 @@ class DrugbankLoader extends AbstractLoader {
                     from('direct:errors')
                     .log('Error: ${exception.message}')
                     .transform(body().append('\n'))
-                    .to('file:' + props.data.path + '?fileExist=Append&fileName=' + props.data.file + '_errrors')
+                    .to('file:' + props.path + '?fileExist=Append&fileName=' + props.file + '_errrors')
                 }
             })
     }

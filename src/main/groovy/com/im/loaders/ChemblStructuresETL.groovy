@@ -8,78 +8,254 @@ import com.im.camel.processor.ChunkBasedReporter
 import com.im.chemaxon.camel.db.DefaultJCBInserter
 import com.im.chemaxon.camel.db.JCBTableInserterUpdater
 import groovy.sql.Sql
+import groovy.util.logging.*
+import java.util.logging.*
 import java.sql.*
-import org.apache.camel.CamelContext
-import org.apache.camel.Exchange
-import org.apache.camel.ProducerTemplate
+import javax.sql.DataSource
+import org.apache.camel.*
+import org.apache.camel.processor.aggregate.AggregationStrategy
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.impl.DefaultCamelContext
+import org.apache.camel.impl.SimpleRegistry
+import org.postgresql.ds.PGSimpleDataSource
 
 /**
  *
  * @author timbo
  */
-class EMoleculesLoader extends AbstractLoader {
+@Log
+class ChemblStructuresETL extends AbstractLoader  {
+    
+    int offset, limit
+    
+    ConfigObject chembl
+    private String structureTable
+
    
     static void main(String[] args) {
         println "Running with $args"
-        def instance = new EMoleculesLoader('loaders/emolecules.properties')
-        instance.run(args)
-    }
-    
-    EMoleculesLoader(String config) {
-        super(config)
-    }
-    
-    void executeRoutes(CamelContext camelContext, Connection con) {
-        println "Loading file ${props.data.path}/${props.data.file}"
-        ProducerTemplate t = camelContext.createProducerTemplate()
-        t.sendBody('direct:start', new File(props.data.path + '/' + props.data.file))
-                                           
-        sleep(100)
-
-        Sql db = new Sql(con)
-        int rows = db.firstRow('select count(*) from ' + props.db.table)[0]
-        println "Found $rows rows"
-    }
-    
-    void createRoutes(CamelContext camelContext, Connection con) {
         
-        String cols = getColumnNamesFromColumnDefs(props.db.extraColumnDefs).join(',')
+        def instance = new ChemblStructuresETL('loaders/chemcentral.properties', 0, 10000000)
+        instance.run(['dropTables','createTables', 'loadData'] as String[])
+       
+    }
+    
+    ChemblStructuresETL(String config, int offset, int limit) {
+        super(new File(config).toURL())
+        chembl = createConfig('loaders/chembl.properties')
+        this.offset = offset
+        this.limit = limit
+        this.structureTable = props.schema + '.structures'
+    }
+    
+    DataSource createDataSource() {
+        PGSimpleDataSource ds = new PGSimpleDataSource()
+        ds.serverName = database.server
+        ds.portNumber = database.port
+        ds.databaseName = database.database
+        ds.user = props.user
+        ds.password = props.password
+        
+        return ds
+    }
+    
 
-        JCBTableInserterUpdater updateHandlerProcessor = new JCBTableInserterUpdater(
-            UpdateHandler.INSERT, props.db.table, cols) {
+    void dropTables(def props) {
+        if (!props.allowRecreate) {
+            println "Will not drop tables. Please set allowRecreate property in chemcentral.properties to true to permit this"
+        } else {
+            
+            ConnectionHandler conh = createConnectionHandler()
+            Sql db = new Sql(conh.getConnection())
 
-            @Override
-            protected void setValues(Exchange exchange, UpdateHandler updateHandler) {
-                String data = exchange.in.getBody(String.class)
-                String[] vals = data.split(' ')
-                updateHandler.structure = vals[0]
-                updateHandler.setValueForAdditionalColumn(1, exchange.getContext().getTypeConverter().convertTo(Integer.class, vals[1]))
-                updateHandler.setValueForAdditionalColumn(2, exchange.getContext().getTypeConverter().convertTo(Integer.class, vals[2]))  
+            if (UpdateHandler.isStructureTable(conh, structureTable)) {
+                println "dropping structure table $structureTable"
+                UpdateHandler.dropStructureTable(conh, structureTable)
+            }
+            
+            executeMayFail(db, 'drop table structure_props', 'DROP TABLE ' + props.schema + '.structure_props')
+            executeMayFail(db, 'drop table sources', 'DROP TABLE ' + props.schema + '.sources')
+            executeMayFail(db, 'drop table categories', 'DROP TABLE ' + props.schema + '.categories')
+            
+        }
+    }
+    
+    void createTables(def props) { 
+        if (!props.allowRecreate) {
+            println "Will not create tables. Please set allowRecreate property in chemcentral.properties to true to permit this"
+        } else {
+            ConnectionHandler conh = createConnectionHandler()
+            Sql db = new Sql(conh.getConnection())
+ 
+            if (!DatabaseProperties.propertyTableExists(conh)) {
+                println "creating property table"
+                DatabaseProperties.createPropertyTable(conh)    
+            }
+            
+            if (!UpdateHandler.isStructureTable(conh, structureTable)) {
+                println "creating structure table $structureTable"
+                StructureTableOptions opts = new StructureTableOptions(structureTable, TableTypeConstants.TABLE_TYPE_MOLECULES)
+                opts.extraColumnDefinitions = ',psa FLOAT, logp FLOAT, hba SMALLINT, hbd SMALLINT, rot_bond_count SMALLINT'
+                //        opts.chemTermColsConfig = [
+                //            psa: 'psa()', 
+                //            logp: 'logp()', 
+                //            hba: 'acceptorCount()', 
+                //            hbd: 'donorCount()',
+                //            rot_bond_count: 'rotatableBondCount()'
+                //        ]
+                opts.standardizerConfig = new File(props.standardizer).text
+                UpdateHandler.createStructureTable(conh, opts)
+                
+                execute(db, 'create table categories',  'CREATE TABLE ' + props.schema + '''.categories (
+  id SERIAL PRIMARY KEY,
+  category_name VARCHAR(16),
+  CONSTRAINT uq_category_name UNIQUE (category_name)
+  )''')
+    
+                execute(db, 'create table sources',  'create table ' + props.schema + '''.sources (
+  id SERIAL PRIMARY KEY,
+  category_id integer NOT NULL,
+  source_name VARCHAR(16),
+  source_description VARCHAR(500),
+  type CHAR(1) NOT NULL,
+  active BOOLEAN  DEFAULT TRUE,
+  CONSTRAINT fk_sources2categories FOREIGN KEY (category_id) references categories(id),
+  CONSTRAINT uq_source_name UNIQUE (source_name)
+)''')
+  
+                execute(db, 'create table structure_props',  'create table ' + props.schema + '''.structure_props (
+  id SERIAL PRIMARY KEY,
+  source_id integer NOT NULL,
+  structure_id integer NOT NULL,
+  batch_id varchar(16),
+  parent_id integer,
+  property_id integer NOT NULL,
+  property_data jsonb,
+  constraint fk_sp2sources FOREIGN KEY (source_id) references sources(id) ON DELETE CASCADE
+);''')
+    
+                execute(db, 'add index idx_sp_source_id',     'CREATE INDEX idx_sp_source_id on ' + props.schema + '.structure_props(source_id)')
+                execute(db, 'add index idx_sp_structure_id',  'CREATE INDEX idx_sp_structure_id on ' + props.schema + '.structure_props(structure_id)')
+                execute(db, 'add index idx_sp_batch_id',      'CREATE INDEX idx_sp_batch_id on ' + props.schema + '.structure_props(structure_id)')
+                execute(db, 'add index idx_sp_parent_id',     'CREATE INDEX idx_sp_parent_id on ' + props.schema + '.structure_props(parent_id)')
+                execute(db, 'add index idx_sp_property_id',   'CREATE INDEX idx_sp_property_id on ' + props.schema + '.structure_props(property_id)')
+                execute(db, 'add index idx_sp_property_data', 'CREATE INDEX idx_sp_property_data ON ' + props.schema + '.structure_props USING gin (property_data jsonb_ops)')
+    
+                execute(db, 'seeding categories', 'insert into ' + props.schema + '''.categories (category_name) values
+('ACTIVITY_DATA'),('CALC_PROP'),('PHYSCHEM')''')
+    
+                execute(db, 'seeding sources', 'insert into ' + props.schema + '''.sources (category_id, source_name, source_description, type, active) 
+values (1, 'CHEMBL', 'ChEMBL 19', 'P', 'Y')''')
             }
         }
+    }
+    
+    CamelContext createCamelContext() {
+        
+        SimpleRegistry registry = new SimpleRegistry()
+        registry.put('chemcentral', dataSource)
+        
+        return new DefaultCamelContext(registry)
+    }
+   
+    
+    void executeRoutes(CamelContext camelContext) {
+        println "Loading data from ${chembl.schema}.compound_structures"
+        ProducerTemplate t = camelContext.createProducerTemplate()
 
-        ConnectionHandler conh = new ConnectionHandler(con, 'JCHEMPROPERTIES')
-        updateHandlerProcessor.connectionHandler = conh
+        t.sendBody('direct:chemblmolquery', """
+SELECT molregno, molfile
+FROM ${chembl.schema}.compound_structures
+ORDER BY molregno
+LIMIT $limit OFFSET $offset 
+""")
+        
+    }
+    
+    JCBTableInserterUpdater createInserter() {
+        JCBTableInserterUpdater structuresInserter = new JCBTableInserterUpdater(
+            UpdateHandler.INSERT, props.schema + '.structures', null) {
+            
+            @Override
+            protected void configure(UpdateHandler uh) {
+                uh.duplicateFiltering = UpdateHandler.DUPLICATE_FILTERING_ON
+            }
+            
+            @Override
+            protected void setValues(Exchange exchange, UpdateHandler updateHandler) {
+                Map data = exchange.in.getBody(Map.class)
+                updateHandler.structure = data['molfile']
+            }
+            
+            @Override
+            protected void handleCdId(int cdid, Exchange exchange) {
+                Map data = exchange.in.getBody(Map.class)
+                data['cd_id'] = Math.abs(cdid)
+                log.fine("Structure has CD_ID of $cdid")
+                if (cdid < 0) {
+                    log.info("$cdid is duplicate for ${data['molregno']}")
+                }
+            }
+        }
+        
+        ConnectionHandler conh = new ConnectionHandler(dataSource.getConnection(), props.schema + '.jchemproperties')
+        structuresInserter.connectionHandler = conh
+        
+        return structuresInserter
+    }
+   
+    void createRoutes(CamelContext camelContext) {
         
         camelContext.addRoutes(new RouteBuilder() {
                 def void configure() {
+                    
                     onException()
                     .handled(true)
                     .to('direct:errors')
-            
-                    from('direct:start')
-                    .unmarshal().gzip()
-                    .split(body().tokenize("\n")).streaming()
-                    //.log('Line: ${body}')
-                    .process(updateHandlerProcessor)
+                    
+                    
+                    def numbers = 1..8 //props.processors
+                    List<Endpoint> endpoints = []
+                    numbers.each {
+                        endpoints << endpoint("seda:processor${it}?size=5&blockWhenFull=true")
+                    }
+                    
+                    endpoints.each {
+                        from(it)
+                        .process(createInserter())
+                        .to('direct:chemcentralpropsload')
+                        .to('seda:report')  
+                    }
+                     
+                    // this is the entry point
+                    from('direct:chemblmolquery')
+                    .to('jdbc:chemcentral?outputType=StreamList')
+                    .split(body()).streaming()
+                    .log(LoggingLevel.DEBUG, 'Procesing molregno ${body[molregno]}')
+                    .loadBalance().roundRobin().to(
+                        endpoints
+                    )      
+
+                    
+                    from('direct:chemcentralpropsload')
+                    .setHeader('sid', simple('${body[cd_id]}'))
+                    .setHeader('molregno', simple('${body[molregno]}'))
+                    //.setHeader('chembl_id', simple('${body[chembl_id]}'))
+                    .setBody(constant("""insert into ${props.schema}.structure_props
+                        (structure_id, source_id, batch_id, property_id, property_data)
+                        select :?sid, 1, activity_id, assay_id, row_to_json(activities)::jsonb
+                        from ${chembl.schema}.activities where molregno = :?molregno"""))
+                    //.log('SQL: ${body}')
+                    .to('jdbc:chemcentral?useHeadersAsParameters=true')
+                    
+                    
+                    from('seda:report')
                     .process(new ChunkBasedReporter(10000))
-            
+                    
+                    
                     from('direct:errors')
-                    .log('Error: ${body}')
-                    .transform(body().append('\n'))
-                    .to('file:' + props.data.path + '?fileExist=Append&fileName=' + props.data.file + '_errrors')
+                    .log('Error: ${exception.message}')
+                    
                 }
             })
     }

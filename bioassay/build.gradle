@@ -1,5 +1,3 @@
-apply plugin: 'maven'
-
 group = 'im.camelish'
 description = 'Camelish BioAssay extensions'
 

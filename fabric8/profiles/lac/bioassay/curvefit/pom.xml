@@ -82,12 +82,7 @@
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-cdi</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.apache.camel</groupId>
-      <artifactId>camel-box</artifactId>
-      <version>${camel-version}</version>
+      <version>${camel.version}</version>
     </dependency>
     
     <!--dependency>
@@ -161,7 +156,7 @@
     <repository>
       <id>local-repo</id>
       <name>local repo</name>
-      <url>file:///Users/timbo/tmp/myRepo/</url>
+      <url>file:///var/maven_repo/repo/</url>
     </repository>
     <repository>
       <id>fusesource.m2</id>

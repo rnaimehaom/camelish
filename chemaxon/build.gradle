@@ -1,5 +1,5 @@
 
-group = 'im.camelish.chemaxon'
+group = 'im.camelish'
 description = 'ChemAxon camelish extensions'
 
 repositories {
@@ -39,4 +39,14 @@ dependencies {
 
     testCompile project(':core-test')
 
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            // hard coded URL as Jenkins puts things to there.
+            // If you want to run this locally then make sure that directory exists. 
+            repository(url: "file:///var/maven_repo/repo/")
+        }
+    }
 }

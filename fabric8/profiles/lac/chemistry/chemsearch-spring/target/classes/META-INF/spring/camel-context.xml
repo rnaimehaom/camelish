@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configures the Camel Context-->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd" 
+       xmlns:aop="http://www.springframework.org/schema/aop">
+    
+    <context:property-placeholder location="classpath:META-INF/spring/spring.properties"/>
+    
+    <bean id="dataSource" class="org.postgresql.ds.PGSimpleDataSource">
+        <property name="serverName" value="${db.server}"/>
+        <property name="databaseName" value="${db.databaseName}"/>
+        <property name="user" value="${db.username}"/>
+        <property name="password" value="${db.password}"/>
+    </bean>
+    
+    <bean id="drugbankSearcher" class="com.im.chemaxon.camel.db.DefaultJChemSearcher">
+        <property name="searchOptions" value="t:d"/>
+        <property name="structureTable" value="${drugbank.table}"/>
+        <property name="dataSource" ref="dataSource"/>
+        <property name="outputMode" value="STREAM"/>
+        <property name="outputFormat" value="cxsmiles"/>
+    </bean>
+
+    <camelContext xmlns="http://camel.apache.org/schema/spring" id="chemsearches">
+        
+        <route id="drugbankSearchHttp">
+            <from uri="jetty:http://0.0.0.0:8880/chemsearch/drugbank"/>
+            <!-- Jetty uses streams so body can only be read once.
+            So to avoid problems grab it as a String immediately 
+            -->
+            <convertBodyTo type="java.lang.String"/>
+            <to uri="direct:drugbankSearchImpl"/>
+            <setHeader headerName="Exchange.CONTENT_TYPE">
+                <constant>text/plain</constant>
+            </setHeader>
+        </route>
+        
+        <!-- JChemSearch is not threadsafe, so it can only execute one search at
+        a time. Using a direct endpoint here to that we can have additional ways
+        of routing in searches to the JChemSearch. Its expected that the could be
+        RESTful web service, JMS queues and socket level inputs.
+        If better scaling is needed then it is expected multiple instances of this
+        service will be set up.
+          -->  
+        <route id="direct:drugBankSearchImpl">
+            <from uri="direct:drugbankSearchImpl"/>
+            <log message="Processing search for ${body}"/> 
+            <process ref="drugbankSearcher"/>
+        </route>
+    </camelContext>
+
+</beans>

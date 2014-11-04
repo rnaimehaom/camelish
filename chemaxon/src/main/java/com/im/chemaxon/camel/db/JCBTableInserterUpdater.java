@@ -99,11 +99,24 @@ public abstract class JCBTableInserterUpdater extends ConnectionHandlerService i
         log.fine("Inserting structure");
         try {
             executionCount++;
-            updateHandler.execute();
+            int cdid = updateHandler.execute(true);
+            handleCdId(cdid, exchange);
         } catch (SQLException e) {
             errorCount++;
             throw e;
         }
+    }
+    
+    /** Callback to allow the generated CD_ID value to be handled.
+     * Default is to do nothing.
+     * the value will be negative if the duplicate filtering is in place and a the
+     * structure is already present
+     * 
+     * @param cdid The generated value for the CD_ID column.
+     * @param exchange The exchange so values can be set to it (body or headers)
+     */
+    protected void handleCdId(int cdid, Exchange exchange) {
+        // noop
     }
 
     /**

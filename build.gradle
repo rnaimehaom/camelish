@@ -3,13 +3,14 @@ group = 'im.camelish'
 description = 'Camel tools for life sciences'
 
 apply plugin: 'idea'
-apply plugin: 'maven'
 
-project.ext.set('camelVersion', '2.13.0')
+
+project.ext.set('camelVersion', '2.14.0')
     
 allprojects {
     apply plugin: 'java'
     apply plugin: 'groovy'
+    apply plugin: 'maven'
     
     sourceCompatibility = 1.7
     version = '0.1-SNAPSHOT'

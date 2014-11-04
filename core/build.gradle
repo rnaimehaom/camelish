@@ -1,13 +1,7 @@
-apply plugin: 'maven'
-
 group = 'im.camelish'
-description = 'Camelish BioAssay extensions'
+description = 'Camelish Core'
 
 dependencies {
-
-    project(':core')
-
-    testCompile project(':core-test')
 
 }
 

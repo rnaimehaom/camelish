@@ -9,11 +9,13 @@ import com.im.chemaxon.camel.db.DefaultJCBInserter
 import com.im.chemaxon.camel.db.JCBTableInserterUpdater
 import groovy.sql.Sql
 import java.sql.*
+import javax.sql.DataSource
 import org.apache.camel.CamelContext
 import org.apache.camel.Exchange
 import org.apache.camel.ProducerTemplate
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.impl.DefaultCamelContext
+import org.postgresql.ds.PGSimpleDataSource
 
 /**
  *
@@ -23,7 +25,7 @@ class MolportLoader extends AbstractLoader {
    
     static void main(String[] args) {
         println "Running with $args"
-        def instance = new MolportLoader('loaders/molport.properties')
+        def instance = new MolportLoader('loaders/chemcentral.properties')
         instance.run(args)
     }
     
@@ -31,18 +33,29 @@ class MolportLoader extends AbstractLoader {
         super(config)
     }
     
-    void executeRoutes(CamelContext camelContext, Connection con) {
+    DataSource createDataSource() {
+        PGSimpleDataSource ds = new PGSimpleDataSource()
+        ds.serverName = props.db.server
+        ds.portNumber = props.db.port
+        ds.databaseName = props.db.database
+        ds.user = props.molport.user
+        ds.password = props.molport.password
+        
+        return ds
+    }
+    
+    void executeRoutes(CamelContext camelContext) {
         synchronized (this) { this.wait() }
     }
     
-    void createRoutes(CamelContext camelContext, Connection con) {
-        final String cols = getColumnNamesFromColumnDefs(props.db.extraColumnDefs).join(',')
+    void createRoutes(CamelContext camelContext) {
+        final String cols = getColumnNamesFromColumnDefs(props.molport.extraColumnDefs).join(',')
         //println "extracols = $cols"
 
         JCBTableInserterUpdater updateHandlerProcessor = new DefaultJCBInserter(
-            props.db.table, cols, props.data.fields)
+            props.molport.schema + '.' + props.molport.table, cols, props.molport.fields)
 
-        ConnectionHandler conh = new ConnectionHandler(con, 'JCHEMPROPERTIES')
+        ConnectionHandler conh = new ConnectionHandler(dataSource.getConnection(), props.molport.schema + '.jchemproperties')
         updateHandlerProcessor.connectionHandler = conh
         
         camelContext.addRoutes(new RouteBuilder() {
@@ -63,7 +76,7 @@ class MolportLoader extends AbstractLoader {
                     from('direct:errors')
                     .log('Error: ${exception.message}')
                     .transform(body().append('\n'))
-                    .to('file:' + props.data.path + '?fileExist=Append&fileName=' + 'molport_errrors')
+                    .to('file:' + props.molport.path + '?fileExist=Append&fileName=' + 'molport_errrors')
                 }
             })
     }

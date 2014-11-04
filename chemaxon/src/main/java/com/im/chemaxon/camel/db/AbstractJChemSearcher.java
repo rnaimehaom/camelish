@@ -67,18 +67,34 @@ public abstract class AbstractJChemSearcher extends ConnectionHandlerService imp
 
     @Override
     public void process(Exchange exchange) throws Exception {
-        handleSearchParams(exchange, jcs);
-        handleQueryStructure(exchange, jcs);
-        String opts = jcs.getSearchOptions().toString();
-        LOG.log(Level.INFO, "Executing search using options: {0}", opts);
-        startSearch(jcs);
-        handleSearchResults(exchange, jcs);
+
+
+
+        LOG.fine("Processing search");
+        // TODO - evaluate this, complex issues are involved
+        // If JChemSearch is already running, need to wait for it to complete
+        // JChemSearch is not thread safe but creating a new one (and new connection to db) is expensive.
+        // Assuming here that this is a single "search unit" and scaling will happen
+        // by running multiple instances in parallel so if a previous search is still 
+        // running in async mode then we need to wait for it to finish.
+        // But this might introduce risks of deadlock.
+        synchronized (jcs) {
+            LOG.finer("Initiating search");
+            handleSearchParams(exchange, jcs);
+            String opts = jcs.getSearchOptions().toString();
+            LOG.log(Level.FINER, "Executing search using options: {0}", opts);
+            handleQueryStructure(exchange, jcs);
+            LOG.finer("Starting search");
+            startSearch(jcs);
+            LOG.finer("Search started");
+            handleSearchResults(exchange, jcs);
+            LOG.fine("Search complete and results sent");
+        }
     }
 
     protected void startSearch(JChemSearch jcs) throws Exception {
         jcs.setRunMode(JChemSearch.RUN_MODE_SYNCH_COMPLETE);
         jcs.setRunning(true);
-        LOG.info("Search complete");
     }
 
     protected void handleQueryStructure(Exchange exchange, JChemSearch jcs) {

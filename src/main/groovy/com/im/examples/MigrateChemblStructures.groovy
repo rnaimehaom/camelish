@@ -5,14 +5,16 @@ import chemaxon.util.ConnectionHandler
 import groovy.sql.*
 import java.sql.*
 
-final String STRUCTURE_TABLE_NAME = 'jchem_structures'
+final String SCHEMA = 'chembl_19'
+final String STRUCTURE_TABLE_NAME = SCHEMA + '.jchem_structures'
 final int REPORTING_CHUNK_SIZE = 10000
 String szr = new File('src/misc/standardizer.xml').text
 
-Sql db = Sql.newInstance('jdbc:mysql://localhost/chembl_18?useCursorFetch=true&defaultFetchSize=1000', 'chembl', 'chembl')
+//Sql db = Sql.newInstance('jdbc:mysql://localhost/chembl_18?useCursorFetch=true&defaultFetchSize=1000', 'chembl', 'chembl')
+Sql db = Sql.newInstance('jdbc:postgresql://localhost:49153/chemcentral', 'chembl', 'chembl')
 UpdateHandler uh
 try {
-    ConnectionHandler conh = new ConnectionHandler(db.connection, 'jchemproperties')
+    ConnectionHandler conh = new ConnectionHandler(db.connection, SCHEMA + '.jchemproperties')
     if (!DatabaseProperties.propertyTableExists(conh)) {
         DatabaseProperties.createPropertyTable(conh)    
     }
@@ -21,13 +23,13 @@ try {
     }
 
     StructureTableOptions opts = new StructureTableOptions(STRUCTURE_TABLE_NAME, TableTypeConstants.TABLE_TYPE_MOLECULES)
-    opts.extraColumnDefinitions = ',MOLREGNO INT(9)'
+    opts.extraColumnDefinitions = ',MOLREGNO INTEGER'
     opts.standardizerConfig = szr
     UpdateHandler.createStructureTable(conh, opts)
 
     uh = new UpdateHandler(conh, UpdateHandler.INSERT, STRUCTURE_TABLE_NAME, 'MOLREGNO');
     int count = 0
-    db.eachRow("select molregno, molfile from compound_structures") {
+    db.eachRow('select molregno, molfile from ' + SCHEMA + '.compound_structures') {
         count++
         if (count % REPORTING_CHUNK_SIZE == 0) {
             println "processing row $count"
