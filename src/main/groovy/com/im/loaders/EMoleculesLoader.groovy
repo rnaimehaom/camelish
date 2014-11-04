@@ -89,6 +89,10 @@ class EMoleculesLoader extends AbstractLoader {
             
                 def void configure() {
                     
+                    onException()
+                    .handled(true)
+                    .to('direct:errors')
+                    
                     def numbers = 1..props.processors
                     
                     List<Endpoint> endpoints = []
@@ -101,13 +105,6 @@ class EMoleculesLoader extends AbstractLoader {
                         .process(createInserter())
                         .to('seda:report')
                     }
-                    
-                    
-                    onException()
-                    .handled(true)
-                    .to('direct:errors')
-                    
-                    
                     
                     
                     from('direct:start')
