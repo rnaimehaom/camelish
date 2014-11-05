@@ -165,13 +165,19 @@ values (1, 'CHEMBL', 'ChEMBL 19', 'P', 'Y')''')
 
         // Note: we are using LIMIT without and ORDER BY so if a meaningful limit is
         // specified rows retreived may not be repeatable between runs
-        t.sendBody('direct:chemblmolquery', """
+        String s = """
 SELECT st.molregno, st.molfile, cl.chembl_id
 FROM ${chembl.schema}.compound_structures st\n\
-JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.entity_type = 'COMPOUND'
-LIMIT $limit 
-""")
+JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.entity_type = 'COMPOUND'"""
+        if (limit) {
+            s += " LIMIT $limit"
+        }
+        if (offset) {
+            s += " OFFSET $offset"
+        }
+        println "SQL: $s"
         
+        t.sendBody('direct:chemblmolquery', s)
     }
     
     JCBTableInserterUpdater createInserter() {
