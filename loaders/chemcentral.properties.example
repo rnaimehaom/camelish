@@ -4,4 +4,5 @@ user='chemcentral'
 password='chemcentral'
 standardizer='src/misc/standardizer.xml'
 processors=4
+reportingChunk=10000
 

@@ -167,7 +167,7 @@ values (1, 'CHEMBL', 'ChEMBL 19', 'P', 'Y')''')
         // specified rows retreived may not be repeatable between runs
         String s = """
 SELECT st.molregno, st.molfile, cl.chembl_id
-FROM ${chembl.schema}.compound_structures st\n\
+FROM ${chembl.schema}.compound_structures st
 JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.entity_type = 'COMPOUND'"""
         if (limit) {
             s += " LIMIT $limit"
@@ -175,7 +175,7 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
         if (offset) {
             s += " OFFSET $offset"
         }
-        println "SQL: $s"
+        //println "SQL: $s"
         
         t.sendBody('direct:chemblmolquery', s)
     }
@@ -258,7 +258,7 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     
                     
                     from('seda:report')
-                    .process(new ChunkBasedReporter(10000))
+                    .process(new ChunkBasedReporter(props.reportingChunk))
                     
                     
                     from('direct:errors')
