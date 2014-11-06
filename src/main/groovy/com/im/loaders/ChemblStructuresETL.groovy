@@ -111,7 +111,19 @@ class ChemblStructuresETL extends AbstractLoader  {
   category_name VARCHAR(16),
   CONSTRAINT uq_category_name UNIQUE (category_name)
   )''')
-    
+                
+                execute(db, 'create table structure_aliases',  'CREATE TABLE ' + props.schema + '''.compound_aliases (
+  id SERIAL PRIMARY KEY,
+  structure_id INTEGER,
+  alias_type VARCHAR(16),
+  alias_value VARCHAR(32)
+  )''')
+                
+                execute(db, 'add index idx_sa_structure_id',   'CREATE INDEX idx_sa_structure_id on ' + props.schema + '.structure_aliases(structure_id)')
+                execute(db, 'add index idx_sa_alias_type',     'CREATE INDEX idx_sa_structure_alias_type on ' + props.schema + '.structure_aliases(alias_type)')
+                execute(db, 'add index idx_sa_alias_value',    'CREATE INDEX idx_sa_structure_alias_value on ' + props.schema + '.structure_aliases(alias_value)')
+ 
+                
                 execute(db, 'create table sources',  'create table ' + props.schema + '''.sources (
   id SERIAL PRIMARY KEY,
   category_id integer NOT NULL,
@@ -125,12 +137,12 @@ class ChemblStructuresETL extends AbstractLoader  {
   
                 execute(db, 'create table structure_props',  'create table ' + props.schema + '''.structure_props (
   id SERIAL PRIMARY KEY,
-  source_id integer NOT NULL,
-  structure_id integer NOT NULL,
-  batch_id varchar(16),
-  parent_id integer,
-  property_id integer NOT NULL,
-  property_data jsonb,
+  source_id INTEGER NOT NULL,
+  structure_id INTEGER NOT NULL,
+  batch_id VARCHAR(16),
+  parent_id INTEGER,
+  property_id INTEGER NOT NULL,
+  property_data JSONB,
   constraint fk_sp2sources FOREIGN KEY (source_id) references ''' + props.schema + ''' .sources(id) ON DELETE CASCADE
 );''')
     
@@ -201,7 +213,7 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                 data['cd_id'] = Math.abs(cdid)
                 log.fine("Structure has CD_ID of $cdid")
                 if (cdid < 0) {
-                    log.info("$cdid is duplicate for ${data['molregno']}")
+                    log.fine("$cdid is duplicate for ${data['molregno']}")
                 }
             }
         }
@@ -231,6 +243,7 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     endpoints.each {
                         from(it)
                         .process(createInserter())
+                        .to('direct:chemcentralaliasload')
                         .to('direct:chemcentralpropsload')
                         .to('seda:report')  
                     }
@@ -256,6 +269,12 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     //.log('SQL: ${body}')
                     .to('jdbc:chemcentral?useHeadersAsParameters=true')
                     
+                    from('direct:chemcentralaliasload')
+                    .setHeader('cid', simple('${body[chembl_id]}'))
+                    .setBody(constant("""insert into ${props.schema}.structure_aliases
+                        (alias_type, alias_value) values ('chembl', :?cid"""))
+                    //.log('SQL: ${body}')
+                    .to('jdbc:chemcentral?useHeadersAsParameters=true')
                     
                     from('seda:report')
                     .process(new ChunkBasedReporter(props.reportingChunk))
