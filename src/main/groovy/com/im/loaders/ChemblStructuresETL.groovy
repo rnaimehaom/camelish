@@ -65,15 +65,14 @@ class ChemblStructuresETL extends AbstractLoader  {
             println "Will not drop tables. Please set allowRecreate property in chemcentral.properties to true to permit this"
         } else {
             
+            ConnectionHandler conh = createConnectionHandler()
+            Sql db = new Sql(conh.getConnection())
+            
             executeMayFail(db, 'drop table structure_props', 'DROP TABLE ' + props.schema + '.structure_props')
             executeMayFail(db, 'drop table sources', 'DROP TABLE ' + props.schema + '.sources')
             executeMayFail(db, 'drop table categories', 'DROP TABLE ' + props.schema + '.categories')
             executeMayFail(db, 'drop table structure_aliases', 'DROP TABLE ' + props.schema + '.structure_aliases')
   
-            
-            ConnectionHandler conh = createConnectionHandler()
-            Sql db = new Sql(conh.getConnection())
-
             if (UpdateHandler.isStructureTable(conh, structureTable)) {
                 println "dropping structure table $structureTable"
                 UpdateHandler.dropStructureTable(conh, structureTable)
