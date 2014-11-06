@@ -116,9 +116,9 @@ class ChemblStructuresETL extends AbstractLoader  {
                 
                 execute(db, 'create table structure_aliases',  'CREATE TABLE ' + props.schema + '''.structure_aliases (
   id SERIAL PRIMARY KEY,
-  structure_id INTEGER,
-  alias_type VARCHAR(16),
-  alias_value VARCHAR(32),
+  structure_id INTEGER NOT NULL,
+  alias_type VARCHAR(16) NOT NULL,
+  alias_value VARCHAR(32) NOT NULL,
   constraint fk_sa2structures FOREIGN KEY (structure_id) references ''' + props.schema + ''' .structures(cd_id) ON DELETE CASCADE
 
   )''')
@@ -274,10 +274,12 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     //.log('SQL: ${body}')
                     .to('jdbc:chemcentral?useHeadersAsParameters=true')
                     
+                    
                     from('direct:chemcentralaliasload')
+                    .setHeader('sid', simple('${body[cd_id]}'))
                     .setHeader('cid', simple('${body[chembl_id]}'))
                     .setBody(constant("""insert into ${props.schema}.structure_aliases
-                        (alias_type, alias_value) values ('chembl', :?cid"""))
+                        (structure_id, alias_type, alias_value) values ("?sid, 'chembl', :?cid)"""))
                     //.log('SQL: ${body}')
                     .to('jdbc:chemcentral?useHeadersAsParameters=true')
                     
