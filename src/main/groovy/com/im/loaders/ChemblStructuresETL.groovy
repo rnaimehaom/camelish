@@ -65,6 +65,12 @@ class ChemblStructuresETL extends AbstractLoader  {
             println "Will not drop tables. Please set allowRecreate property in chemcentral.properties to true to permit this"
         } else {
             
+            executeMayFail(db, 'drop table structure_props', 'DROP TABLE ' + props.schema + '.structure_props')
+            executeMayFail(db, 'drop table sources', 'DROP TABLE ' + props.schema + '.sources')
+            executeMayFail(db, 'drop table categories', 'DROP TABLE ' + props.schema + '.categories')
+            executeMayFail(db, 'drop table structure_aliases', 'DROP TABLE ' + props.schema + '.structure_aliases')
+  
+            
             ConnectionHandler conh = createConnectionHandler()
             Sql db = new Sql(conh.getConnection())
 
@@ -73,10 +79,7 @@ class ChemblStructuresETL extends AbstractLoader  {
                 UpdateHandler.dropStructureTable(conh, structureTable)
             }
             
-            executeMayFail(db, 'drop table structure_props', 'DROP TABLE ' + props.schema + '.structure_props')
-            executeMayFail(db, 'drop table sources', 'DROP TABLE ' + props.schema + '.sources')
-            executeMayFail(db, 'drop table categories', 'DROP TABLE ' + props.schema + '.categories')
-            
+                      
         }
     }
     
@@ -116,7 +119,9 @@ class ChemblStructuresETL extends AbstractLoader  {
   id SERIAL PRIMARY KEY,
   structure_id INTEGER,
   alias_type VARCHAR(16),
-  alias_value VARCHAR(32)
+  alias_value VARCHAR(32),
+  constraint fk_sa2structures FOREIGN KEY (structure_id) references ''' + props.schema + ''' .structures(cd_id) ON DELETE CASCADE
+
   )''')
                 
                 execute(db, 'add index idx_sa_structure_id',   'CREATE INDEX idx_sa_structure_id on ' + props.schema + '.structure_aliases(structure_id)')
@@ -143,7 +148,8 @@ class ChemblStructuresETL extends AbstractLoader  {
   parent_id INTEGER,
   property_id INTEGER NOT NULL,
   property_data JSONB,
-  constraint fk_sp2sources FOREIGN KEY (source_id) references ''' + props.schema + ''' .sources(id) ON DELETE CASCADE
+  constraint fk_sp2sources FOREIGN KEY (source_id) references ''' + props.schema + ''' .sources(id) ON DELETE CASCADE,
+  constraint fk_sp2structures FOREIGN KEY (structure_id) references ''' + props.schema + ''' .structures(cd_id) ON DELETE CASCADE
 );''')
     
                 execute(db, 'add index idx_sp_source_id',     'CREATE INDEX idx_sp_source_id on ' + props.schema + '.structure_props(source_id)')
