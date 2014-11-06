@@ -114,7 +114,7 @@ class ChemblStructuresETL extends AbstractLoader  {
   CONSTRAINT uq_category_name UNIQUE (category_name)
   )''')
                 
-                execute(db, 'create table structure_aliases',  'CREATE TABLE ' + props.schema + '''.compound_aliases (
+                execute(db, 'create table structure_aliases',  'CREATE TABLE ' + props.schema + '''.structure_aliases (
   id SERIAL PRIMARY KEY,
   structure_id INTEGER,
   alias_type VARCHAR(16),
