@@ -81,6 +81,7 @@ class DrugbankLoader extends AbstractLoader {
             
                     from('direct:errors')
                     .log('Error: ${exception.message}')
+                    .log('Error: ${exception.stacktrace}')
                     .transform(body().append('\n'))
                     .to('file:' + props.path + '?fileExist=Append&fileName=' + props.file + '_errrors')
                 }

@@ -263,7 +263,7 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     
                     from('direct:errors')
                     .log('Error: ${exception.message}')
-                    
+                    //.log('Error: ${exception.stacktrace}')
                 }
             })
     }

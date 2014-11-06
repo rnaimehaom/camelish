@@ -138,6 +138,11 @@ task emoleculesReload(dependsOn: 'classes', type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 }
 
+task chemblETLLoadData(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.ChemblStructuresETL'
+    args = ['loadData']
+    classpath = sourceSets.main.runtimeClasspath
+}
 task chemblETLReload(dependsOn: 'classes', type: JavaExec) {
     main = 'com.im.loaders.ChemblStructuresETL'
     args = ['dropTables', 'createTables', 'loadData']
