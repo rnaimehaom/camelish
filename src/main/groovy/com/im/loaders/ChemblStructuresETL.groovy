@@ -279,7 +279,7 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     .setHeader('sid', simple('${body[cd_id]}'))
                     .setHeader('cid', simple('${body[chembl_id]}'))
                     .setBody(constant("""insert into ${props.schema}.structure_aliases
-                        (structure_id, alias_type, alias_value) values (?sid, 'chembl', :?cid)"""))
+                        (structure_id, alias_type, alias_value) values (:?sid, 'chembl', :?cid)"""))
                     //.log('SQL: ${body}')
                     .to('jdbc:chemcentral?useHeadersAsParameters=true')
                     
