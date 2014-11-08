@@ -248,6 +248,9 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     endpoints.each {
                         from(it)
                         .process(createInserter())
+                        .setHeader('sid', simple('${body[cd_id]}'))
+                        .setHeader('molregno', simple('${body[molregno]}'))
+                        .setHeader('cid', simple('${body[chembl_id]}'))
                         .to('direct:chemcentralaliasload')
                         .to('direct:chemcentralpropsload')
                         .to('seda:report')  
@@ -255,7 +258,8 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                      
                     // this is the entry point
                     from('direct:chemblmolquery')
-                    .to('jdbc:chemcentral?outputType=StreamList')
+                    .log('SQL: ${body}')
+                    .to('jdbc:chemcentral?outputType=StreamList&statement.fetchSize=1000&resetAutoCommit=false')
                     .split(body()).streaming()
                     .log(LoggingLevel.DEBUG, 'Procesing molregno ${body[molregno]}')
                     .loadBalance().roundRobin().to(
@@ -264,9 +268,6 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
 
                     
                     from('direct:chemcentralpropsload')
-                    .setHeader('sid', simple('${body[cd_id]}'))
-                    .setHeader('molregno', simple('${body[molregno]}'))
-                    .setHeader('cid', simple('${body[chembl_id]}'))
                     .setBody(constant("""insert into ${props.schema}.structure_props
                         (structure_id, source_id, batch_id, property_id, property_data)
                         select :?sid, 1, :?cid, assay_id, row_to_json(activities)::jsonb
@@ -276,8 +277,6 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     
                     
                     from('direct:chemcentralaliasload')
-                    .setHeader('sid', simple('${body[cd_id]}'))
-                    .setHeader('cid', simple('${body[chembl_id]}'))
                     .setBody(constant("""insert into ${props.schema}.structure_aliases
                         (structure_id, alias_type, alias_value) values (:?sid, 'chembl', :?cid)"""))
                     //.log('SQL: ${body}')
@@ -289,7 +288,8 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     
                     from('direct:errors')
                     .log('Error: ${exception.message}')
-                    //.log('Error: ${exception.stacktrace}')
+                    .log(LoggingLevel.DEBUG, 'Error: ${exception.stacktrace}')
+
                 }
             })
     }
