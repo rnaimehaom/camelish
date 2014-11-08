@@ -31,20 +31,14 @@ class AbstractLoader {
     
     AbstractLoader(URL config) {
         
-        database = createConfig('loaders/database.properties')
-        props = createConfig(config)
+        database = Utils.createConfig('loaders/database.properties')
+        props = Utils.createConfig(config)
         validate()
         dataSource = createDataSource()
         tableName = props.schema + '.' + props.table
     }
     
-    static ConfigObject createConfig(String path) {
-        return createConfig(new File(path).toURL())
-    }
     
-    static ConfigObject createConfig(URL url) {
-        return new ConfigSlurper().parse(url)
-    }
     
     void validate() {
         assert props.schema != null
@@ -132,18 +126,6 @@ class AbstractLoader {
     }
 	
 
-    void executeMayFail(Sql db, String desc, String sql) {
-        println desc
-        try {
-            db.execute(sql)
-        } catch (SQLException ex) {
-            println "Execution failed: ${ex.message}"
-        }
-    }
-
-    void execute(Sql db, String desc, String sql) {
-        println desc
-        db.execute(sql)
-    }
+    
 
 }

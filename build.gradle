@@ -143,8 +143,9 @@ task chemblETLLoadData(dependsOn: 'classes', type: JavaExec) {
     args = ['loadData']
     classpath = sourceSets.main.runtimeClasspath
 }
-task chemblETLReload(dependsOn: 'classes', type: JavaExec) {
-    main = 'com.im.loaders.ChemblStructuresETL'
-    args = ['dropTables', 'createTables', 'loadData']
+
+task chemcentralCreate(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.ChemcentralCreate'
+    args = ['dropTables', 'createTables']
     classpath = sourceSets.main.runtimeClasspath
 }
