@@ -14,7 +14,7 @@ ds.password = 'chembl'
 
 
 Connection con = ds.connection
-//con.autoCommit = false
+con.autoCommit = false
 
 Statement st = con.createStatement();
 
@@ -22,7 +22,7 @@ Statement st = con.createStatement();
 st.setFetchSize(50);
 //st.setMaxRows(100)
 println "executing"
-ResultSet rs = st.executeQuery("SELECT * FROM chembl_19.compound_structures limit 10000");
+ResultSet rs = st.executeQuery("SELECT * FROM chembl_19.compound_structures");
 println "executed"
 while (rs.next())
 {

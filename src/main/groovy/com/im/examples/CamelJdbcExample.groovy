@@ -38,7 +38,7 @@ camelContext.addRoutes(new RouteBuilder() {
 camelContext.start()
 
 
-String s = "SELECT * FROM chembl_19.compound_structures limit 10000"
+String s = "SELECT * FROM chembl_19.compound_structures"
         
 println "SQL: $s"
 
