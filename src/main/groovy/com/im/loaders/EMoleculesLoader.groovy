@@ -16,7 +16,6 @@ import org.apache.camel.Exchange
 import org.apache.camel.ProducerTemplate
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.impl.DefaultCamelContext
-import org.postgresql.ds.PGSimpleDataSource
 
 /**
  *
@@ -32,17 +31,6 @@ class EMoleculesLoader extends AbstractLoader {
     
     EMoleculesLoader(String config) {
         super(new File(config).toURL())
-    }
-    
-    DataSource createDataSource() {
-        PGSimpleDataSource ds = new PGSimpleDataSource()
-        ds.serverName = database.server
-        ds.portNumber = database.port
-        ds.databaseName = database.database
-        ds.user = props.user
-        ds.password = props.password
-        
-        return ds
     }
     
     JCBTableInserterUpdater createInserter() {

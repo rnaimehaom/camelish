@@ -64,7 +64,7 @@ public class StreamingSQLProcessor implements Processor {
                 iterator.closeConnection();
             }
         });
-        exchange.getOut().setBody(iterator);
+        exchange.getIn().setBody(iterator);
     }
 
 }

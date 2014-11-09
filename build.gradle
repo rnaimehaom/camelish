@@ -138,14 +138,21 @@ task emoleculesReload(dependsOn: 'classes', type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 }
 
+task chemcentralCreate(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.ChemcentralCreate'
+    args = ['dropTables', 'createTables']
+    classpath = sourceSets.main.runtimeClasspath
+}
+
 task chemblETLLoadData(dependsOn: 'classes', type: JavaExec) {
     main = 'com.im.loaders.ChemblStructuresETL'
     args = ['loadData']
     classpath = sourceSets.main.runtimeClasspath
 }
 
-task chemcentralCreate(dependsOn: 'classes', type: JavaExec) {
-    main = 'com.im.loaders.ChemcentralCreate'
-    args = ['dropTables', 'createTables']
+task drugbankETLLoadData(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.DrugBankETL'
+    args = ['loadData']
     classpath = sourceSets.main.runtimeClasspath
 }
+

@@ -33,17 +33,6 @@ class MolportLoader extends AbstractLoader {
         super(config)
     }
     
-    DataSource createDataSource() {
-        PGSimpleDataSource ds = new PGSimpleDataSource()
-        ds.serverName = props.db.server
-        ds.portNumber = props.db.port
-        ds.databaseName = props.db.database
-        ds.user = props.molport.user
-        ds.password = props.molport.password
-        
-        return ds
-    }
-    
     void executeRoutes(CamelContext camelContext) {
         synchronized (this) { this.wait() }
     }

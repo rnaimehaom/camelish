@@ -38,9 +38,11 @@ class AbstractLoader {
         tableName = props.schema + '.' + props.table
     }
     
+    protected DataSource createDataSource() {     
+        return Utils.createDataSource(database, props.user, props.password)
+    }
     
-    
-    void validate() {
+    protected void validate() {
         assert props.schema != null
         assert props.table != null
     }
@@ -55,7 +57,7 @@ class AbstractLoader {
         }
     }
     
-    boolean doAction(String action, def props) {
+    protected boolean doAction(String action, def props) {
         if (action == 'createTables') {
             createTables(props)
             return true
@@ -69,12 +71,12 @@ class AbstractLoader {
         return false
     }
 
-    ConnectionHandler createConnectionHandler() {
+    protected ConnectionHandler createConnectionHandler() {
         return new ConnectionHandler(dataSource.getConnection(), props.schema + '.jchemproperties')
     }
     
     
-    void dropTables(def props) {
+    protected void dropTables(def props) {
         println "Dropping tables"
         ConnectionHandler conh = createConnectionHandler()
         if (UpdateHandler.isStructureTable(conh, tableName)) {
@@ -82,7 +84,7 @@ class AbstractLoader {
         }
     }
     
-    void createTables(def props) {
+    protected void createTables(def props) {
         println "Creating tables"
         String szr = null
         if (props.standardizer) {
@@ -100,7 +102,7 @@ class AbstractLoader {
     }
     
         
-    void loadData(def props) {
+    protected void loadData(def props) {
         
         CamelContext context = createCamelContext()
         createRoutes(context)

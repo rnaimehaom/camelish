@@ -23,27 +23,27 @@ import org.apache.camel.impl.SimpleRegistry
  * @author timbo
  */
 @Log
-class ChemblStructuresETL extends AbstractLoader  {
+class DrugBankETL extends AbstractLoader  {
     
     int offset, limit
     
-    ConfigObject chembl
+    ConfigObject drugbank
     private String structureTable
 
    
     static void main(String[] args) {
         println "Running with $args"
         
-        def instance = new ChemblStructuresETL('loaders/chemcentral.properties')
+        def instance = new DrugBankETL('loaders/chemcentral.properties')
         instance.run(args)
        
     }
     
-    ChemblStructuresETL(String config) {
+    DrugBankETL(String config) {
         super(new File(config).toURL())
-        chembl = Utils.createConfig('loaders/chembl.properties')
-        this.offset = chembl.offset
-        this.limit = chembl.limit
+        drugbank = Utils.createConfig('loaders/drugbank.properties')
+        this.offset = drugbank.offset
+        this.limit = drugbank.limit
         this.structureTable = props.schema + '.structures'
     }
     
@@ -66,30 +66,33 @@ class ChemblStructuresETL extends AbstractLoader  {
     
     void executeRoutes(CamelContext camelContext) {
         
-        int chemblSourceId = Utils.createSourceDefinition(dataSource, props.schema, 1, chembl.name, chembl.description, 'P', chembl.owner, chembl.maintainer, true)
+        int sourceId = Utils.createSourceDefinition(dataSource, props.schema, 1, drugbank.name, drugbank.description, 'P', drugbank.owner, drugbank.maintainer, true)
         
-        if (!chemblSourceId) {
-            println "Failed to generate source ID for ChEMBL"
+        if (!sourceId) {
+            println "Failed to generate source ID for DrugBank"
         } else {
+            int propertyId = Utils.createPropertyDefinition(dataSource, props.schema, sourceId,
+'DrugBankData', 'Data from DrugBank database', null, null, null)
+            
+            if (!propertyId) {
+                println "Failed to generate property ID for DrugBank"
+            } else {
         
-            println "Loading data from ${chembl.schema}.compound_structures"
-            ProducerTemplate t = camelContext.createProducerTemplate()
+                println "Loading data from ${drugbank.schema}.${drugbank.table}"
+                ProducerTemplate t = camelContext.createProducerTemplate()
 
-            // Note: we are using LIMIT without and ORDER BY so if a meaningful limit is
-            // specified rows retreived may not be repeatable between runs
-            String s = """
-SELECT st.molregno, st.molfile, cl.chembl_id
-FROM ${chembl.schema}.compound_structures st
-JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.entity_type = 'COMPOUND'"""
-            if (limit) {
-                s += " LIMIT $limit"
-            }
-            if (offset) {
-                s += " OFFSET $offset"
-            }
-            //println "SQL: $s"
+                // Note: we are using LIMIT without and ORDER BY so if a meaningful limit is
+                // specified rows retreived may not be repeatable between runs
+                String s = "SELECT cd_structure, drugbank_id FROM ${drugbank.schema}.${drugbank.table}"
+                if (limit) {
+                    s += " LIMIT $limit"
+                }
+                if (offset) {
+                    s += " OFFSET $offset"
+                }
         
-            t.sendBodyAndHeader('direct:chemblmolquery', s, 'chemblSourceId', chemblSourceId)
+                t.sendBodyAndHeaders('direct:drugbankquery', s, [sourceId: sourceId, propertyId: propertyId])
+            }
         }
     }
     
@@ -105,7 +108,8 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
             @Override
             protected void setValues(Exchange exchange, UpdateHandler updateHandler) {
                 Map data = exchange.in.getBody(Map.class)
-                updateHandler.structure = data['molfile']
+                def mol = data['cd_structure']
+                updateHandler.structure = new String(mol)
             }
             
             @Override
@@ -114,7 +118,7 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                 data['cd_id'] = Math.abs(cdid)
                 log.fine("Structure has CD_ID of $cdid")
                 if (cdid < 0) {
-                    log.fine("$cdid is duplicate for ${data['molregno']}")
+                    log.fine("$cdid is duplicate for ${data['drugbank_id']}")
                 }
             }
         }
@@ -135,52 +139,48 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     .to('direct:errors')
                     
                     
-                    def numbers = 1..props.processors
-                    List<Endpoint> endpoints = []
-                    numbers.each {
-                        endpoints << endpoint("seda:processor${it}?size=2&blockWhenFull=true")
-                    }
+                    Endpoint endpoint = endpoint("seda:processor1?size=2&blockWhenFull=true")
                     
-                    endpoints.each {
-                        from(it)
-                        .process(createInserter())
-                        .setHeader('sid', simple('${body[cd_id]}'))
-                        .setHeader('molregno', simple('${body[molregno]}'))
-                        .setHeader('cid', simple('${body[chembl_id]}'))
-                        .to('direct:chemcentralaliasload')
-                        .to('direct:chemcentralpropsload')
-                        .to('seda:report')  
-                    }
+                    from(endpoint)
+                    .process(createInserter())
+                    .setHeader('strid', simple('${body[cd_id]}'))
+                    .setHeader('drugbank_id', simple('${body[drugbank_id]}'))
+                    .to('direct:chemcentralaliasload')
+                    .to('direct:chemcentralpropsload')
+                    .to('seda:report')  
+                    
                      
                     // this is the entry point
-                    from('direct:chemblmolquery')
+                    from('direct:drugbankquery')
                     .log('SQL: ${body}')
                     .process(new StreamingSQLProcessor(dataSource, 500, true))
-                    //.to('jdbc:chemcentral?outputType=StreamList&statement.fetchSize=1000')
                     .split(body()).streaming()
-                    .log(LoggingLevel.DEBUG, 'Procesing molregno ${body[molregno]}')
-                    .loadBalance().roundRobin().to(
-                        endpoints
-                    )            
+                    //.log('Procesing drugbank_id ${body[drugbank_id]}')
+                    .to(endpoint)        
 
                     
                     from('direct:chemcentralpropsload')
-                    .setBody(constant("""insert into ${props.schema}.structure_props
-                        (structure_id, source_id, batch_id, property_id, property_data)
-                        select :?sid, :?chemblSourceId, :?cid, assay_id, row_to_json(activities)::jsonb
-                        from ${chembl.schema}.activities where molregno = :?molregno"""))
+                    .setBody(constant("""\
+                        |insert into ${props.schema}.structure_props
+                        |  (structure_id, source_id, property_id, property_data)
+                        |  select :?strid, :?sourceId, :?propertyId, row_to_json(i.*)::jsonb
+                        |    from (
+                        |      select drugbank_id, drug_groups, generic_name, brands
+                        |      from ${drugbank.schema}.${drugbank.table}
+                        |      where drugbank_id = :?drugbank_id\n\
+                        |    ) i""".stripMargin()))
                     //.log('SQL: ${body}')
-                    .to('jdbc:chemcentral?useHeadersAsParameters=true&resetAutoCommit=false')
+                    .to('jdbc:chemcentral?useHeadersAsParameters=true')
                     
                     
                     from('direct:chemcentralaliasload')
                     .setBody(constant("""insert into ${props.schema}.structure_aliases
-                        (structure_id, alias_type, alias_value) values (:?sid, 'CHEMBL', :?cid)"""))
+                        (structure_id, alias_type, alias_value) values (:?strid, 'DRUGBANK', :?drugbank_id)"""))
                     //.log('SQL: ${body}')
-                    .to('jdbc:chemcentral?useHeadersAsParameters=true&resetAutoCommit=false')
+                    .to('jdbc:chemcentral?useHeadersAsParameters=true')
                     
                     from('seda:report')
-                    .process(new ChunkBasedReporter(props.reportingChunk))
+                    .process(new ChunkBasedReporter(1000))
                     
                     
                     from('direct:errors')

@@ -15,7 +15,6 @@ import org.apache.camel.Exchange
 import org.apache.camel.ProducerTemplate
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.impl.DefaultCamelContext
-import org.postgresql.ds.PGSimpleDataSource
 
 /**
  *
@@ -31,17 +30,6 @@ class DrugbankLoader extends AbstractLoader {
     
     DrugbankLoader(String config) {
         super(new File(config).toURL())
-    }
-    
-    DataSource createDataSource() {
-        PGSimpleDataSource ds = new PGSimpleDataSource()
-        ds.serverName = database.server
-        ds.portNumber = database.port
-        ds.databaseName = database.database
-        ds.user = props.user
-        ds.password = props.password
-        
-        return ds
     }
     
     void executeRoutes(CamelContext camelContext) {
@@ -76,8 +64,7 @@ class DrugbankLoader extends AbstractLoader {
                     .split().method(MoleculeIOUtils.class, 'mrecordIterator').streaming()
                     //.log('Processing line ${body}')
                     .process(updateHandlerProcessor)
-                    .process(new ChunkBasedReporter())
-                    //.to("mock:theend")
+                    .process(new ChunkBasedReporter(props.reportingChunk))
             
                     from('direct:errors')
                     .log('Error: ${exception.message}')
