@@ -5,6 +5,7 @@ import chemaxon.marvin.io.*
 import chemaxon.util.ConnectionHandler
 import com.im.chemaxon.io.MoleculeIOUtils
 import com.im.camel.processor.ChunkBasedReporter
+import com.im.camel.processor.StreamingSQLProcessor
 import com.im.chemaxon.camel.db.DefaultJCBInserter
 import com.im.chemaxon.camel.db.JCBTableInserterUpdater
 import groovy.sql.Sql
@@ -14,6 +15,7 @@ import java.sql.*
 import javax.sql.DataSource
 import org.apache.camel.*
 import org.apache.camel.builder.RouteBuilder
+import org.apache.camel.component.jdbc.ResultSetIterator
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.SimpleRegistry
 import org.postgresql.ds.PGSimpleDataSource
@@ -139,10 +141,10 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     .to('direct:errors')
                     
                     
-                    def numbers = 1..8 //props.processors
+                    def numbers = 1..props.processors
                     List<Endpoint> endpoints = []
                     numbers.each {
-                        endpoints << endpoint("seda:processor${it}?size=5&blockWhenFull=true")
+                        endpoints << endpoint("seda:processor${it}?size=2&blockWhenFull=true")
                     }
                     
                     endpoints.each {
@@ -159,12 +161,13 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     // this is the entry point
                     from('direct:chemblmolquery')
                     .log('SQL: ${body}')
-                    .to('jdbc:chemcentral?outputType=StreamList&statement.fetchSize=1000&resetAutoCommit=false')
+                    .process(new StreamingSQLProcessor(dataSource, 500, true))
+                    //.to('jdbc:chemcentral?outputType=StreamList&statement.fetchSize=1000')
                     .split(body()).streaming()
                     .log(LoggingLevel.DEBUG, 'Procesing molregno ${body[molregno]}')
                     .loadBalance().roundRobin().to(
                         endpoints
-                    )      
+                    )            
 
                     
                     from('direct:chemcentralpropsload')
@@ -173,14 +176,14 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                         select :?sid, 1, :?cid, assay_id, row_to_json(activities)::jsonb
                         from ${chembl.schema}.activities where molregno = :?molregno"""))
                     //.log('SQL: ${body}')
-                    .to('jdbc:chemcentral?useHeadersAsParameters=true')
+                    .to('jdbc:chemcentral?useHeadersAsParameters=true&resetAutoCommit=false')
                     
                     
                     from('direct:chemcentralaliasload')
                     .setBody(constant("""insert into ${props.schema}.structure_aliases
                         (structure_id, alias_type, alias_value) values (:?sid, 'chembl', :?cid)"""))
                     //.log('SQL: ${body}')
-                    .to('jdbc:chemcentral?useHeadersAsParameters=true')
+                    .to('jdbc:chemcentral?useHeadersAsParameters=true&resetAutoCommit=false')
                     
                     from('seda:report')
                     .process(new ChunkBasedReporter(props.reportingChunk))
@@ -188,7 +191,7 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                     
                     from('direct:errors')
                     .log('Error: ${exception.message}')
-                    .log(LoggingLevel.DEBUG, 'Error: ${exception.stacktrace}')
+                    .log('Error: ${exception.stacktrace}')
 
                 }
             })

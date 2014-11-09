@@ -99,14 +99,14 @@ class ChemcentralCreate  {
             if (!UpdateHandler.isStructureTable(conh, structureTable)) {
                 println "creating structure table $structureTable"
                 StructureTableOptions opts = new StructureTableOptions(structureTable, TableTypeConstants.TABLE_TYPE_MOLECULES)
-                opts.extraColumnDefinitions = ',psa FLOAT, logp FLOAT, hba SMALLINT, hbd SMALLINT, rot_bond_count SMALLINT'
-                //        opts.chemTermColsConfig = [
-                //            psa: 'psa()', 
-                //            logp: 'logp()', 
-                //            hba: 'acceptorCount()', 
-                //            hbd: 'donorCount()',
-                //            rot_bond_count: 'rotatableBondCount()'
-                //        ]
+//                opts.extraColumnDefinitions = ',psa FLOAT, logp FLOAT, hba SMALLINT, hbd SMALLINT, rot_bond_count SMALLINT'
+//                        opts.chemTermColsConfig = [
+//                            psa: 'psa()', 
+//                            logp: 'logp()', 
+//                            hba: 'acceptorCount()', 
+//                            hbd: 'donorCount()',
+//                            rot_bond_count: 'rotatableBondCount()'
+//                        ]
                 opts.standardizerConfig = new File(props.standardizer).text
                 UpdateHandler.createStructureTable(conh, opts)
                 

@@ -19,7 +19,7 @@ con.autoCommit = false
 Statement st = con.createStatement();
 
 // Turn use of the cursor on.
-st.setFetchSize(50);
+st.setFetchSize(500);
 //st.setMaxRows(100)
 println "executing"
 ResultSet rs = st.executeQuery("SELECT * FROM chembl_19.compound_structures");
