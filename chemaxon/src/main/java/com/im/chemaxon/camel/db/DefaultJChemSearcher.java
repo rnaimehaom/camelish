@@ -9,7 +9,6 @@ import chemaxon.enumeration.supergraph.SupergraphException;
 import chemaxon.formats.MolExporter;
 import chemaxon.jchem.db.DatabaseSearchException;
 import chemaxon.jchem.db.JChemSearch;
-import chemaxon.jchem.db.PropertyNotSetException;
 import chemaxon.sss.search.JChemSearchOptions;
 import chemaxon.sss.search.SearchException;
 import chemaxon.struc.Molecule;
@@ -210,7 +209,7 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
      * @throws DatabaseSearchException
      */
     void handleAsMolecules(Exchange exchange, JChemSearch jcs)
-            throws SQLException, IOException, SearchException, SupergraphException, PropertyNotSetException, DatabaseSearchException {
+            throws SQLException, IOException, SearchException, SupergraphException, DatabaseSearchException {
         Molecule[] mols = jcs.getHitsAsMolecules(jcs.getResults(), null, outputColumns, null);
         exchange.getOut().setBody(Arrays.asList(mols));
     }
@@ -230,7 +229,7 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
      * @throws DatabaseSearchException
      */
     private void handleAsText(final Exchange exchange, final JChemSearch jcs)
-            throws SQLException, IOException, SearchException, SupergraphException, PropertyNotSetException, DatabaseSearchException {
+            throws SQLException, IOException, SearchException, SupergraphException, DatabaseSearchException {
         final Molecule[] mols = jcs.getHitsAsMolecules(jcs.getResults(), null, outputColumns, null);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         final MolExporter exporter = new MolExporter(out, outputFormat);
@@ -243,7 +242,7 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
     }
 
     private void handleAsStream(final Exchange exchange, final JChemSearch jcs)
-            throws SQLException, IOException, SearchException, SupergraphException, PropertyNotSetException, DatabaseSearchException {
+            throws SQLException, IOException, SearchException, SupergraphException, DatabaseSearchException {
 
         final PipedInputStream pis = new PipedInputStream();
         final PipedOutputStream out = new PipedOutputStream(pis);
@@ -268,7 +267,7 @@ public class DefaultJChemSearcher extends AbstractJChemSearcher {
                                 LOG.log(Level.FINER, "Processing {0} hits", mols.length);
                                 writeMoleculesToMolExporter(exporter, mols);
                             }
-                        } catch (InterruptedException | DatabaseSearchException | SQLException | IOException | SearchException | SupergraphException | PropertyNotSetException e) {
+                        } catch (InterruptedException | DatabaseSearchException | SQLException | IOException | SearchException | SupergraphException e) {
                             LOG.log(Level.SEVERE, "Error writing molecules", e);
                         } finally {
 

@@ -6,7 +6,7 @@ repositories {
 
 }
 
-def jchemVersion = "6.2.1"
+def jchemVersion = "6.3.4"
 
 dependencies {
 
@@ -33,7 +33,7 @@ dependencies {
         exclude group:'org.apache.derby',module:'derbyrun'
         exclude group:'org.apache.derby',module:'derbytools'
         exclude group:'mysql',module:'mysql-connector-java'
-        exclude group:'com.oracle',module:'ojdbc6'
+        //exclude group:'com.oracle',module:'ojdbc6' // needed in JChem 6.3.4
         exclude group:'org.hsqldb',module:'hsqldb'
     }
 

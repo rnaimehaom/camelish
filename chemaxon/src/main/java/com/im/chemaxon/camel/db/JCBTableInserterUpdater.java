@@ -21,7 +21,7 @@
  * updateHandler.setStructure(mol); } };
  * </code>
  *
- * The class is a Camel Service so understands about the Camel liefcycle. The
+ * The class is a Camel Service so understands about the Camel lifecycle. The
  * UpdateHandler is created when Camel start()s and is cleaned up when Camel
  * stop()s.
  *
@@ -31,7 +31,7 @@
  */
 package com.im.chemaxon.camel.db;
 
-import chemaxon.jchem.db.PropertyNotSetException;
+
 import chemaxon.jchem.db.UpdateHandler;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
@@ -76,7 +76,7 @@ public abstract class JCBTableInserterUpdater extends ConnectionHandlerService i
         updateHandler = createUpdateHandler();
     }
 
-    private UpdateHandler createUpdateHandler() throws PropertyNotSetException, SQLException {
+    private UpdateHandler createUpdateHandler() throws SQLException {
         log.log(Level.FINE, "Creating UpdateHandler for table %s", tableName);
         UpdateHandler uh = new UpdateHandler(getConnectionHandler(), mode, tableName, additionalColumns);
         configure(uh);
