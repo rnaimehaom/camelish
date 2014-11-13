@@ -89,6 +89,7 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
             }
             //println "SQL: $s"
         
+            t.sendBodyAndHeader('direct:propertydefs', null, 'chemblSourceId', chemblSourceId)
             t.sendBodyAndHeader('direct:chemblmolquery', s, 'chemblSourceId', chemblSourceId)
         }
     }
@@ -129,7 +130,7 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
         
         camelContext.addRoutes(new RouteBuilder() {
                 def void configure() {
-                    
+                                      
                     onException()
                     .handled(true)
                     .to('direct:errors')
@@ -151,6 +152,18 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                         .to('direct:chemcentralpropsload')
                         .to('seda:report')  
                     }
+                    
+                    from('direct:propertydefs')
+                    .setBody(constant("""\
+                        |INSERT INTO chemcentral.property_definitions (source_id, property_description, original_id)
+                        |  SELECT :?chemblSourceId, ass.description, sub.assay_id FROM
+                        |    (SELECT assay_id, count(*) est_count 
+                        |      FROM chembl_19.activities act
+                        |      GROUP BY assay_id
+                        |    ) sub
+                        |  JOIN chembl_19.assays ass ON ass.assay_id = sub.assay_id""".stripMargin()))
+                    .log('SQL: ${body}')
+                    .to('jdbc:chemcentral?useHeadersAsParameters=true')
                      
                     // this is the entry point
                     from('direct:chemblmolquery')
@@ -165,12 +178,15 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
 
                     
                     from('direct:chemcentralpropsload')
-                    .setBody(constant("""insert into ${props.schema}.structure_props
-                        (structure_id, source_id, batch_id, property_id, property_data)
-                        select :?sid, :?chemblSourceId, :?cid, assay_id, row_to_json(activities)::jsonb
-                        from ${chembl.schema}.activities where molregno = :?molregno"""))
+                    .setBody(constant("""\
+                        |INSERT INTO ${props.schema}.structure_props
+                        |  (structure_id, source_id, batch_id, property_id, property_data)
+                        |  SELECT :?sid, :?chemblSourceId, :?cid, p.property_id, row_to_json(a)::jsonb
+                        |    FROM ${chembl.schema}.activities a
+                        |    JOIN ${props.schema}.property_definitions p ON p.original_id = a.assay_id::varchar
+                        |    WHERE molregno = :?molregno""".stripMargin()))
                     //.log('SQL: ${body}')
-                    .to('jdbc:chemcentral?useHeadersAsParameters=true&resetAutoCommit=false')
+                    .to('jdbc:chemcentral?useHeadersAsParameters=true')
                     
                     
                     from('direct:chemcentralaliasload')

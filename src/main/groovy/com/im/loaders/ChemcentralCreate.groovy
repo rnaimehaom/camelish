@@ -136,14 +136,17 @@ class ChemcentralCreate  {
                 Utils.execute(db, 'create table property_definitions',  'create table ' + props.schema + '''.property_definitions (
   property_id SERIAL PRIMARY KEY,
   source_id integer NOT NULL,
-  property_name VARCHAR(32) NOT NULL,
-  property_description VARCHAR(500),
+  property_description TEXT,
   original_id VARCHAR(32),
   definition TEXT,
   example TEXT,
   CONSTRAINT fk_sp2sources FOREIGN KEY (source_id) references ''' + props.schema + ''' .sources(id) ON DELETE CASCADE,
   CONSTRAINT uq_properties UNIQUE (source_id, property_id)
 )''')
+                
+                Utils.execute(db, 'add index idx_pd_source_id',     'CREATE INDEX idx_pd_source_id on ' + props.schema + '.property_definitions(source_id)')
+                Utils.execute(db, 'add index idx_pd_original_id',   'CREATE INDEX idx_pd_original_id on ' + props.schema + '.property_definitions(original_id)')
+ 
   
                 Utils.execute(db, 'create table structure_props',  'create table ' + props.schema + '''.structure_props (
   id SERIAL PRIMARY KEY,

@@ -72,7 +72,7 @@ class DrugBankETL extends AbstractLoader  {
             println "Failed to generate source ID for DrugBank"
         } else {
             int propertyId = Utils.createPropertyDefinition(dataSource, props.schema, sourceId,
-'DrugBankData', 'Data from DrugBank database', null, null, null)
+                'Data from DrugBank database', null, null, null)
             
             if (!propertyId) {
                 println "Failed to generate property ID for DrugBank"

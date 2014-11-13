@@ -71,7 +71,6 @@ values ($categoryId, $name, $desc, $type, $owner, $maintainer, $active)""")
          DataSource dataSource, 
          String schema, 
          int sourceId, 
-         String name, 
          String desc, 
          String originalId, 
          String definition, 
@@ -82,8 +81,8 @@ values ($categoryId, $name, $desc, $type, $owner, $maintainer, $active)""")
         try {
             
             def keys = db.executeInsert("""INSERT INTO ${Sql.expand(schema)}.property_definitions
-(source_id, property_name, property_description, original_id, definition, example) 
-values ($sourceId, $name, $desc, $originalId, $definition, $example)""")
+(source_id, property_description, original_id, definition, example) 
+values ($sourceId, $desc, $originalId, $definition, $example)""")
             id = keys[0][0]
             println "Property ID is $id"
         
