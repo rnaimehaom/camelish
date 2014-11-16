@@ -23,28 +23,29 @@ import org.apache.camel.impl.SimpleRegistry
  * @author timbo
  */
 @Log
-class ChemblStructuresETL extends AbstractLoader  {
+class ChemblCamelETL extends AbstractLoader  {
     
     int offset, limit
     
     ConfigObject chembl
-    private String structureTable
+    private String structureTable, concordanceTable
 
    
     static void main(String[] args) {
         println "Running with $args"
         
-        def instance = new ChemblStructuresETL('loaders/chemcentral.properties')
+        def instance = new ChemblCamelETL('loaders/chemcentral.properties')
         instance.run(args)
        
     }
     
-    ChemblStructuresETL(String config) {
+    ChemblCamelETL(String config) {
         super(new File(config).toURL())
         chembl = Utils.createConfig('loaders/chembl.properties')
         this.offset = chembl.offset
         this.limit = chembl.limit
         this.structureTable = props.schema + '.structures'
+        this.concordanceTable = chembl.schema + '.concordance'
     }
     
     void dropTables(def props) {
@@ -66,32 +67,24 @@ class ChemblStructuresETL extends AbstractLoader  {
     
     void executeRoutes(CamelContext camelContext) {
         
-        int chemblSourceId = Utils.createSourceDefinition(dataSource, props.schema, 1, chembl.name, chembl.description, 'P', chembl.owner, chembl.maintainer, true)
         
-        if (!chemblSourceId) {
-            println "Failed to generate source ID for ChEMBL"
-        } else {
-        
-            println "Loading data from ${chembl.schema}.compound_structures"
-            ProducerTemplate t = camelContext.createProducerTemplate()
+        println "Loading data from ${chembl.schema}.compound_structures"
+        ProducerTemplate t = camelContext.createProducerTemplate()
 
-            // Note: we are using LIMIT without and ORDER BY so if a meaningful limit is
-            // specified rows retreived may not be repeatable between runs
-            String s = """
-SELECT st.molregno, st.molfile, cl.chembl_id
-FROM ${chembl.schema}.compound_structures st
-JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.entity_type = 'COMPOUND'"""
-            if (limit) {
-                s += " LIMIT $limit"
-            }
-            if (offset) {
-                s += " OFFSET $offset"
-            }
-            //println "SQL: $s"
-        
-            t.sendBodyAndHeader('direct:propertydefs', null, 'chemblSourceId', chemblSourceId)
-            t.sendBodyAndHeader('direct:chemblmolquery', s, 'chemblSourceId', chemblSourceId)
+        // Note: we are using LIMIT without and ORDER BY so if a meaningful limit is
+        // specified rows retreived may not be repeatable between runs
+        String s = """\
+                |SELECT st.molregno, st.molfile
+                |  FROM ${chembl.schema}.compound_structures""".stripMargin()
+        if (limit) {
+            s += " LIMIT $limit"
         }
+        if (offset) {
+            s += " OFFSET $offset"
+        }
+        //println "SQL: $s"
+        
+        t.sendBody('direct:chemblmolquery')
     }
     
     JCBTableInserterUpdater createInserter() {
@@ -147,56 +140,21 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                         .process(createInserter())
                         .setHeader('sid', simple('${body[cd_id]}'))
                         .setHeader('molregno', simple('${body[molregno]}'))
-                        .setHeader('cid', simple('${body[chembl_id]}'))
-                        .to('direct:chemcentralaliasload')
-                        .to('direct:chemcentralpropsload')
+                        .setBody("INSERT INTO $concordanceTable (structure_id, molregno) VALUES (:?sid, :?molregno)")
+                        .to("jdbc:chemcentral")
                         .to('seda:report')  
                     }
                     
-                    from('direct:propertydefs')
-                    .setBody(constant("""\
-                        |INSERT INTO chemcentral.property_definitions (source_id, property_description, original_id)
-                        |  SELECT :?chemblSourceId, ass.description, sub.assay_id FROM
-                        |    (SELECT assay_id, count(*) est_count 
-                        |      FROM chembl_19.activities act
-                        |      GROUP BY assay_id
-                        |    ) sub
-                        |  JOIN chembl_19.assays ass ON ass.assay_id = sub.assay_id""".stripMargin()))
-                    .log('SQL: ${body}')
-                    .to('jdbc:chemcentral?useHeadersAsParameters=true')
-                     
+                    
                     // this is the entry point
                     from('direct:chemblmolquery')
                     .log('SQL: ${body}')
                     .process(new StreamingSQLProcessor(dataSource, 500, true))
-                    //.to('jdbc:chemcentral?outputType=StreamList&statement.fetchSize=1000')
                     .split(body()).streaming()
                     .log(LoggingLevel.DEBUG, 'Procesing molregno ${body[molregno]}')
                     .loadBalance().roundRobin().to(
                         endpoints
                     )            
-
-                    
-                    from('direct:chemcentralpropsload')
-                    .setBody(constant("""\
-                        |INSERT INTO ${props.schema}.structure_props
-                        |  (structure_id, source_id, batch_id, property_id, property_data)
-                        |  SELECT :?sid, :?chemblSourceId, :?cid, p.property_id, row_to_json(a)::jsonb
-                        |    FROM ${chembl.schema}.activities a
-                        |    JOIN ${props.schema}.property_definitions p ON p.original_id = a.assay_id::varchar
-                        |    WHERE molregno = :?molregno""".stripMargin()))
-                    //.log('SQL: ${body}')
-                    .to('jdbc:chemcentral?useHeadersAsParameters=true')
-                    
-                    
-                    from('direct:chemcentralaliasload')
-                    .setBody(constant("""insert into ${props.schema}.structure_aliases
-                        (structure_id, alias_type, alias_value) values (:?sid, 'CHEMBL', :?cid)"""))
-                    //.log('SQL: ${body}')
-                    .to('jdbc:chemcentral?useHeadersAsParameters=true&resetAutoCommit=false')
-                    
-                    from('seda:report')
-                    .process(new ChunkBasedReporter(props.reportingChunk))
                     
                     
                     from('direct:errors')
@@ -206,6 +164,7 @@ JOIN ${chembl.schema}.chembl_id_lookup cl ON cl.entity_id = st.molregno AND cl.e
                 }
             })
     }
-	
+
+
 }
 

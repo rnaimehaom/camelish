@@ -138,6 +138,7 @@ class ChemcentralCreate  {
   source_id integer NOT NULL,
   property_description TEXT,
   original_id VARCHAR(32),
+  est_size INTEGER,
   definition TEXT,
   example TEXT,
   CONSTRAINT fk_sp2sources FOREIGN KEY (source_id) references ''' + props.schema + ''' .sources(id) ON DELETE CASCADE,

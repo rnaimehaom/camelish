@@ -144,15 +144,13 @@ task chemcentralCreate(dependsOn: 'classes', type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 }
 
-task chemblETLLoadData(dependsOn: 'classes', type: JavaExec) {
-    main = 'com.im.loaders.ChemblStructuresETL'
-    args = ['loadData']
+task chemblETL(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.ChemblETL'
     classpath = sourceSets.main.runtimeClasspath
 }
 
-task drugbankETLLoadData(dependsOn: 'classes', type: JavaExec) {
+task drugbankETL(dependsOn: 'classes', type: JavaExec) {
     main = 'com.im.loaders.DrugBankETL'
-    args = ['loadData']
     classpath = sourceSets.main.runtimeClasspath
 }
 
