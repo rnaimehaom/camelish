@@ -11,7 +11,8 @@ class AbstractETL {
     ConfigObject chemcentral, database
     
     protected String chemcentralStructureAliasesTable, chemcentralPropertyDefintionsTable,
-    chemcentralStructurePropertiesTable, chemCentralStructureTable, chemCentralSourcesTable
+    chemcentralStructurePropertiesTable, chemcentralStructureTable, chemcentralSourcesTable,
+    chemcentralPropertyTable
     
     protected String deleteAliasesSql, insertAliasesSql 
     
@@ -19,11 +20,12 @@ class AbstractETL {
         chemcentral = Utils.createConfig('loaders/chemcentral.properties')
         database = Utils.createConfig('loaders/database.properties')
         
-        this.chemCentralStructureTable = chemcentral.schema + '.structures'
+        this.chemcentralStructureTable = chemcentral.schema + '.structures'
         this.chemcentralStructureAliasesTable = chemcentral.schema + '.structure_aliases'
         this.chemcentralPropertyDefintionsTable = chemcentral.schema + '.property_definitions'
         this.chemcentralStructurePropertiesTable = chemcentral.schema + '.structure_props'
-        this.chemCentralSourcesTable = chemcentral.schema + '.sources'
+        this.chemcentralSourcesTable = chemcentral.schema + '.sources'
+        this.chemcentralPropertyTable = chemcentral.schema + '.jchemproperties'
                
     }
     

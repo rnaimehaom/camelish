@@ -49,7 +49,7 @@ class ChemblETL extends AbstractETL {
             |CREATE TABLE $concordanceTable (
             |  structure_id INTEGER NOT NULL,
             |  molregno INTEGER NOT NULL,
-            |  CONSTRAINT fk_con2stuctures FOREIGN KEY (structure_id) references $chemCentralStructureTable (cd_id) ON DELETE CASCADE,
+            |  CONSTRAINT fk_con2stuctures FOREIGN KEY (structure_id) references $chemcentralStructureTable (cd_id) ON DELETE CASCADE,
             |  CONSTRAINT fk_con2molregno FOREIGN KEY (molregno) references $chemblCompoundStructuresTable (molregno) ON DELETE CASCADE
             |)""".stripMargin()
         
@@ -66,7 +66,7 @@ class ChemblETL extends AbstractETL {
         
         deleteAliasesSql = "DELETE FROM $chemcentralStructureAliasesTable WHERE alias_type = ?"
         
-        deleteSourceSql = "DELETE FROM $chemCentralSourcesTable WHERE source_name = ?"
+        deleteSourceSql = "DELETE FROM $chemcentralSourcesTable WHERE source_name = ?"
         
         insertAliasesSql = """\
             |INSERT INTO $chemcentralStructureAliasesTable (structure_id, alias_type, alias_value)
@@ -108,7 +108,7 @@ class ChemblETL extends AbstractETL {
             createConcordanceTable(db1)
              
             db2 = new Sql(dataSource.connection)
-            loader = new StructureLoader(dataSource.connection, chemCentralStructureTable)
+            loader = new StructureLoader(dataSource.connection, chemcentralStructureTable, chemcentralPropertyTable)
             db2.connection.autoCommit = false
             db2.withStatement {
                 it.fetchSize = fetchSize

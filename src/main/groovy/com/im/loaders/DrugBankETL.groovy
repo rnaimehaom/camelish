@@ -45,7 +45,7 @@ class DrugBankETL extends AbstractETL {
             |CREATE TABLE $concordanceTable (
             |  structure_id INTEGER NOT NULL,
             |  cd_id INTEGER NOT NULL,
-            |  CONSTRAINT fk_con2stuctures FOREIGN KEY (structure_id) references $chemCentralStructureTable (cd_id) ON DELETE CASCADE,
+            |  CONSTRAINT fk_con2stuctures FOREIGN KEY (structure_id) references $chemcentralStructureTable (cd_id) ON DELETE CASCADE,
             |  CONSTRAINT fk_con2cdid FOREIGN KEY (cd_id) references $drugBankTable (cd_id) ON DELETE CASCADE
             |)""".stripMargin()
         
@@ -60,7 +60,7 @@ class DrugBankETL extends AbstractETL {
         
         deleteAliasesSql = "DELETE FROM $chemcentralStructureAliasesTable WHERE alias_type = ?"
         
-        deleteSourceSql = "DELETE FROM $chemCentralSourcesTable WHERE source_name = ?"
+        deleteSourceSql = "DELETE FROM $chemcentralSourcesTable WHERE source_name = ?"
         
         insertAliasesSql = """\
             |INSERT INTO $chemcentralStructureAliasesTable (structure_id, alias_type, alias_value)
@@ -92,7 +92,7 @@ class DrugBankETL extends AbstractETL {
             createConcordanceTable(db1)
                   
             db2 = new Sql(dataSource.connection)
-            loader = new StructureLoader(dataSource.connection, chemCentralStructureTable)
+            loader = new StructureLoader(dataSource.connection, chemcentralStructureTable, chemcentralPropertyTable)
             db2.connection.autoCommit = false
             db2.withStatement {
                 it.fetchSize = fetchSize
