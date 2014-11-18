@@ -8,34 +8,32 @@ import javax.sql.DataSource
  *
  * @author timbo
  */
-class DrugBankETL extends AbstractETL {
+class EMoleculesETL extends AbstractETL {
     
-    ConfigObject drugbank
-    String drugBankTable, concordanceTable
+    ConfigObject emolecules
+    String emoleculesTable, concordanceTable
     
     int limit, offset
     int fetchSize = 500
     
-    static final String DATASET_NAME = 'DrugBank'
-    
     protected String createConcordanceTableSql, readStructuresSql, insertConcordanceSql, 
-    createStructureIdIndexSql, createDBCdidIndexSql,
+    createConcordanceStructureIdIndexSql, createConcordanceCdidIndexSql,
     insertPropertyDefinitionsSql, insertStructurePropsSql, deleteSourceSql
     
     static void main(String[] args) {
         println "Running with $args"
-        def instance = new DrugBankETL()
+        def instance = new EMoleculesETL()
         instance.run()
     }
     
-    DrugBankETL() {
-        drugbank = Utils.createConfig('loaders/drugbank.properties')
+    EMoleculesETL() {
+        emolecules = Utils.createConfig('loaders/emolecules.properties')
         
-        this.concordanceTable = drugbank.schema + '.drugbank_concordance'
-        this.drugBankTable = drugbank.schema + '.' + drugbank.table
+        this.concordanceTable = emolecules.schema + '.emolecules_concordance'
+        this.emoleculesTable = emolecules.schema + '.' + emolecules.table
                 
-        this.offset = drugbank.offset
-        this.limit = drugbank.limit
+        this.offset = emolecules.offset
+        this.limit = emolecules.limit
         
         generateSqls()
     }
@@ -46,17 +44,17 @@ class DrugBankETL extends AbstractETL {
             |  structure_id INTEGER NOT NULL,
             |  cd_id INTEGER NOT NULL,
             |  CONSTRAINT fk_con2stuctures FOREIGN KEY (structure_id) references $chemcentralStructureTable (cd_id) ON DELETE CASCADE,
-            |  CONSTRAINT fk_con2cdid FOREIGN KEY (cd_id) references $drugBankTable (cd_id) ON DELETE CASCADE
+            |  CONSTRAINT fk_con2cdid FOREIGN KEY (cd_id) references $emoleculesTable (cd_id) ON DELETE CASCADE
             |)""".stripMargin()
         
-        readStructuresSql = "SELECT cd_id, cd_structure FROM $drugBankTable".toString()
+        readStructuresSql = "SELECT cd_id, cd_structure FROM $emoleculesTable".toString()
         limit && (readStructuresSql += " LIMIT $limit")
         offset && (readStructuresSql += " OFFSET $offset")
         
         insertConcordanceSql = "INSERT INTO $concordanceTable (structure_id, cd_id) VALUES (?, ?)".toString()
         
-        createStructureIdIndexSql = "CREATE INDEX idx_con_structure_id on $concordanceTable (structure_id)"
-        createDBCdidIndexSql = "CREATE INDEX idx_con_cd_id on $concordanceTable (cd_id)"
+        createConcordanceStructureIdIndexSql = "CREATE INDEX idx_con_emolbb_structure_id on $concordanceTable (structure_id)"
+        createConcordanceCdidIndexSql = "CREATE INDEX idx_con_emolbb_cd_id on $concordanceTable (cd_id)"
         
         deleteAliasesSql = "DELETE FROM $chemcentralStructureAliasesTable WHERE alias_type = ?"
         
@@ -64,20 +62,20 @@ class DrugBankETL extends AbstractETL {
         
         insertAliasesSql = """\
             |INSERT INTO $chemcentralStructureAliasesTable (structure_id, alias_type, alias_value)
-            |  SELECT con.structure_id, '$DATASET_NAME', db.drugbank_id
+            |  SELECT con.structure_id, '$emolecules.name', e.version_id
             |    FROM $concordanceTable con
-            |    JOIN $drugBankTable db ON db.cd_id = con.cd_id""".stripMargin()
+            |    JOIN $emoleculesTable e ON e.cd_id = con.cd_id""".stripMargin()
         
         insertPropertyDefinitionsSql = """\
                 |INSERT INTO $chemcentralPropertyDefintionsTable (source_id, property_description, original_id, est_size)
-                |  VALUES (?, 'DrugBank record', null, 3429)""".stripMargin()
+                |  VALUES (?, 'eMolecules building blocks record', null, $emolecules.estSize)""".stripMargin()
         
         insertStructurePropsSql = """\
                 |INSERT INTO $chemcentralStructurePropertiesTable
                 |  (structure_id, source_id, batch_id, property_id, property_data)
-                |  SELECT con.structure_id, ?, db.drugbank_id, ?, row_to_json(db)::jsonb
-                |    FROM (SELECT cd_id, drugbank_id, drug_groups, generic_name, brands FROM $drugBankTable) db
-                |    JOIN $concordanceTable con ON con.cd_id = db.cd_id""".stripMargin()
+                |  SELECT con.structure_id, ?, e.version_id, ?, row_to_json(e)::jsonb
+                |    FROM (SELECT cd_id, version_id, parent_id FROM $emoleculesTable) e
+                |    JOIN $concordanceTable con ON con.cd_id = e.cd_id""".stripMargin()
 
     }
     
@@ -103,9 +101,9 @@ class DrugBankETL extends AbstractETL {
             
             createConcordanceIndexes(db1)
             
-            deleteSource(db1, DATASET_NAME)
-            int sourceId = Utils.createSourceDefinition(dataSource, chemcentral.schema, 1, drugbank.name, drugbank.description, 'P', drugbank.owner, drugbank.maintainer, true)
-            insertAliases(db1, DATASET_NAME)
+            deleteSource(db1, emolecules.name)
+            int sourceId = Utils.createSourceDefinition(dataSource, chemcentral.schema, 1, emolecules.name, emolecules.description, 'P', emolecules.owner, emolecules.maintainer, true)
+            insertAliases(db1, emolecules.name)
             int propertyId = generatePropertyDefinition(db1, sourceId)
             generatePropertyValues(db1, [sourceId, propertyId])
             
@@ -131,7 +129,7 @@ class DrugBankETL extends AbstractETL {
     }
     
     void loadData(Sql reader, Sql writer, StructureLoader loader) {
-        println "Loading data from $drugBankTable"
+        println "Loading data from $emoleculesTable"
         
         int count = 0
         reader.eachRow(readStructuresSql) { row ->
@@ -149,8 +147,8 @@ class DrugBankETL extends AbstractETL {
     
     void createConcordanceIndexes(Sql db) {
         println "Creating concordance indexes"
-        db.execute(createStructureIdIndexSql)
-        db.execute(createDBCdidIndexSql)
+        db.execute(createConcordanceStructureIdIndexSql)
+        db.execute(createConcordanceCdidIndexSql)
         println "Indexes created"
     } 
     

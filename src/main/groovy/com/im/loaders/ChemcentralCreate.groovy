@@ -89,14 +89,17 @@ class ChemcentralCreate  {
             if (!UpdateHandler.isStructureTable(conh, structureTable)) {
                 println "creating structure table $structureTable"
                 StructureTableOptions opts = new StructureTableOptions(structureTable, TableTypeConstants.TABLE_TYPE_MOLECULES)
-//                opts.extraColumnDefinitions = ',psa FLOAT, logp FLOAT, hba SMALLINT, hbd SMALLINT, rot_bond_count SMALLINT'
-//                        opts.chemTermColsConfig = [
+                opts.extraColumnDefinitions = 'parent_id INTEGER, frag_count SMALLINT'
+//,psa FLOAT, logp FLOAT, hba SMALLINT, hbd SMALLINT, rot_bond_count SMALLINT
+
+                        opts.chemTermColsConfig = [
+                              frag_count: 'fragmentCount()'
 //                            psa: 'psa()', 
 //                            logp: 'logp()', 
 //                            hba: 'acceptorCount()', 
 //                            hbd: 'donorCount()',
 //                            rot_bond_count: 'rotatableBondCount()'
-//                        ]
+                        ]
                 opts.standardizerConfig = new File(props.standardizer).text
                 UpdateHandler.createStructureTable(conh, opts)
                 
@@ -163,7 +166,7 @@ class ChemcentralCreate  {
     
                 Utils.execute(db, 'add index idx_sp_source_id',     'CREATE INDEX idx_sp_source_id on ' + props.schema + '.structure_props(source_id)')
                 Utils.execute(db, 'add index idx_sp_structure_id',  'CREATE INDEX idx_sp_structure_id on ' + props.schema + '.structure_props(structure_id)')
-                Utils.execute(db, 'add index idx_sp_batch_id',      'CREATE INDEX idx_sp_batch_id on ' + props.schema + '.structure_props(structure_id)')
+                Utils.execute(db, 'add index idx_sp_batch_id',      'CREATE INDEX idx_sp_batch_id on ' + props.schema + '.structure_props(batch_id)')
                 Utils.execute(db, 'add index idx_sp_parent_id',     'CREATE INDEX idx_sp_parent_id on ' + props.schema + '.structure_props(parent_id)')
                 Utils.execute(db, 'add index idx_sp_property_id',   'CREATE INDEX idx_sp_property_id on ' + props.schema + '.structure_props(property_id)')
                 //Utils.execute(db, 'add index idx_sp_property_data', 'CREATE INDEX idx_sp_property_data ON ' + props.schema + '.structure_props USING gin (property_data jsonb_ops)')

@@ -100,7 +100,7 @@ class ChemblETL extends AbstractETL {
     void run() {
 
         DataSource dataSource = Utils.createDataSource(database, chemcentral.user, chemcentral.password)
-        Sql db1, db2
+        Sql db1, db2, db3
         db1 = new Sql(dataSource.connection)
         StructureLoader loader
         
@@ -108,7 +108,8 @@ class ChemblETL extends AbstractETL {
             createConcordanceTable(db1)
              
             db2 = new Sql(dataSource.connection)
-            loader = new StructureLoader(dataSource.connection, chemcentralStructureTable, chemcentralPropertyTable)
+            db3 = new Sql(dataSource.connection)
+            loader = new StructureLoader(db3, chemcentralStructureTable, chemcentralPropertyTable)
             db2.connection.autoCommit = false
             db2.withStatement {
                 it.fetchSize = fetchSize
@@ -126,6 +127,7 @@ class ChemblETL extends AbstractETL {
             
         } finally {
             loader?.close()
+            db3?.close()
             db2?.close()
             db1?.close()
         }

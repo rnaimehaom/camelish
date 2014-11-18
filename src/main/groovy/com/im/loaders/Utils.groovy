@@ -1,5 +1,6 @@
 package com.im.loaders
 
+import chemaxon.struc.Molecule
 import groovy.sql.Sql
 import java.sql.SQLException
 import javax.sql.DataSource
@@ -90,6 +91,58 @@ values ($sourceId, $desc, $originalId, $definition, $example)""")
             db.close()
         }
         return id        
+    }
+    
+    /** Finds the parent structure. If there is only one fragement it returns the 
+     * input molecule (same instance). If there are multipel fragements if returns 
+     * the biggest by atom count. If multiple fragements have the same mumber of 
+     * atoms then the one with the biggest mass is returned. If multiple ones have 
+     * the same atom count and mass it is assumed they are the same (which is not
+     * necessarily the case) and the first is returned.
+     * 
+     * @return The parent fragment, or null if none can be found
+    */
+    static Molecule findParentStructure(Molecule mol) {
+        Molecule[] frags = mol.convertToFrags()
+        if (frags.length == 1) {
+            return mol
+        } else {
+            int maxAtoms = 0
+            def biggestByAtomCount = []
+            frags.each { f ->
+                int ac = f.atomCount
+                if (ac > maxAtoms) {
+                    biggestByAtomCount.clear()
+                    biggestByAtomCount << f
+                    maxAtoms = ac
+                } else if(f.atomCount == maxAtoms) {
+                    biggestByAtomCount << f
+                } 
+            }
+            if (biggestByAtomCount.size() == 1) {
+                return biggestByAtomCount[0]
+            } else if (biggestByAtomCount.size() > 1) {
+                def biggestByMass = []
+                double maxMass = 0
+                biggestByAtomCount.each { f ->
+                    double mass = f.mass
+                    if (mass > maxMass) {
+                        biggestByMass.clear()
+                        biggestByMass << f
+                        maxMass = mass
+                    } else if(f.mass == maxMass) {
+                        biggestByMass << f
+                    }
+                }
+                if (biggestByMass.size() > 0) {
+                    return biggestByMass[0]
+                } else { // strange?
+                    return null
+                }
+            } else { // strange?
+                return null
+            }
+        }
     }
 	
 }
