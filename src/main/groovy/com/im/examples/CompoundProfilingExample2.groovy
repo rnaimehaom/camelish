@@ -8,7 +8,10 @@ import org.apache.camel.*
 import org.apache.camel.impl.*
 import org.apache.camel.builder.*
 
-Sql db = Sql.newInstance('jdbc:mysql://localhost/vendordbs', 'vendordbs', 'vendordbs')
+ConfigObject database = new ConfigSlurper().parse(new File('loaders/database.properties').toURL())
+
+//Sql db = Sql.newInstance('jdbc:mysql://localhost/vendordbs', 'vendordbs', 'vendordbs')
+Sql db = Sql.newInstance(database.url, 'vendordbs', 'vendordbs')
 
 Processor dbQuery = new Processor() {
     // this is just to have something that works. A real impl would look completely different 
@@ -42,7 +45,7 @@ camelContext.addRoutes(new RouteBuilder() {
             
             // route 3 - pass to python to generate the frequencies
             from("direct:python")
-            .to("language:python:file:/Users/timbo/dev/git/camelish/src/main/python/FreqCounter.py?transform=false")
+            .to("language:python:file:src/main/python/FreqCounter.py?transform=false")
         }
     })
 camelContext.start()
