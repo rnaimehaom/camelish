@@ -7,6 +7,7 @@ user='vendordbs'
 password='vendordbs'
 schema='vendordbs'
 table='drugbank_feb_2014'
+estSize = 3429
 
 tableType=TableTypeConstants.TABLE_TYPE_MOLECULES
 standardizer='src/misc/standardizer.xml'
@@ -26,3 +27,6 @@ description='DrugBank Feb 2014'
 owner='public'
 maintainer='timdudgeon'
 offset=0
+limit=0
+
+

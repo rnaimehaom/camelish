@@ -23,7 +23,7 @@ public class ChemTermsEvaluator {
         this.propName = name;
     }
 
-    void evaluate(Iterable<Molecule> mols) {
+    public void evaluate(Iterable<Molecule> mols) {
 
         MolContext context = new MolContext();
 

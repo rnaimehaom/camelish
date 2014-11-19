@@ -11,8 +11,6 @@ import chemaxon.struc.Molecule
 class MoleculeUtilsSpecification extends Specification {
 
 
-    def resultEndpoint
-
     def 'heavy atom counter'() {
         
         expect:

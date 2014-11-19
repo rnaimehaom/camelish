@@ -55,8 +55,8 @@ class DrugBankETL extends AbstractETL {
         
         insertConcordanceSql = "INSERT INTO $concordanceTable (structure_id, cd_id) VALUES (?, ?)".toString()
         
-        createStructureIdIndexSql = "CREATE INDEX idx_con_structure_id on $concordanceTable (structure_id)"
-        createDBCdidIndexSql = "CREATE INDEX idx_con_cd_id on $concordanceTable (cd_id)"
+        createStructureIdIndexSql = "CREATE INDEX idx_con_drugbank_structure_id on $concordanceTable (structure_id)"
+        createDBCdidIndexSql = "CREATE INDEX idx_con_drugbank_cd_id on $concordanceTable (cd_id)"
         
         deleteAliasesSql = "DELETE FROM $chemcentralStructureAliasesTable WHERE alias_type = ?"
         
@@ -70,7 +70,7 @@ class DrugBankETL extends AbstractETL {
         
         insertPropertyDefinitionsSql = """\
                 |INSERT INTO $chemcentralPropertyDefintionsTable (source_id, property_description, original_id, est_size)
-                |  VALUES (?, 'DrugBank record', null, 3429)""".stripMargin()
+                |  VALUES (?, 'DrugBank record', null, ${drugbank.estSize})""".stripMargin()
         
         insertStructurePropsSql = """\
                 |INSERT INTO $chemcentralStructurePropertiesTable
@@ -126,8 +126,8 @@ class DrugBankETL extends AbstractETL {
     }
     
     void createConcordanceTable(Sql db) {
-        Utils.executeMayFail(db, 'drop concordance table', 'DROP TABLE ' + concordanceTable)
-        Utils.execute(db, 'create concordance table', createConcordanceTableSql)
+        Utils.executeMayFail(db, 'drop concordance table $concordanceTable', 'DROP TABLE ' + concordanceTable)
+        Utils.execute(db, 'create concordance table $concordanceTable', createConcordanceTableSql)
     }
     
     void loadData(Sql reader, Sql writer, StructureLoader loader) {
@@ -135,10 +135,16 @@ class DrugBankETL extends AbstractETL {
         
         int count = 0
         reader.eachRow(readStructuresSql) { row ->
-            int cdid = loader.execute(new String(row['cd_structure']))
-            //println cdid
-            writer.executeInsert(insertConcordanceSql, [Math.abs(cdid), row['cd_id']])
             count++
+            try {
+                int cdid = loader.execute(new String(row['cd_structure']))
+                //println cdid
+                writer.executeInsert(insertConcordanceSql, [Math.abs(cdid), row['cd_id']])
+            } catch (Exception ex) {
+                println "WARNING: failed to process row $count"
+                ex.printStackTrace()
+            }
+
             if (count % 1000 == 0) {
                 println "Handled $count rows"
             }

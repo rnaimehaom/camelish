@@ -29,7 +29,7 @@ class EMoleculesETL extends AbstractETL {
     EMoleculesETL() {
         emolecules = Utils.createConfig('loaders/emolecules.properties')
         
-        this.concordanceTable = emolecules.schema + '.emolecules_concordance'
+        this.concordanceTable = emolecules.schema + '.' + emolecules.concordanceTable
         this.emoleculesTable = emolecules.schema + '.' + emolecules.table
                 
         this.offset = emolecules.offset
@@ -53,8 +53,8 @@ class EMoleculesETL extends AbstractETL {
         
         insertConcordanceSql = "INSERT INTO $concordanceTable (structure_id, cd_id) VALUES (?, ?)".toString()
         
-        createConcordanceStructureIdIndexSql = "CREATE INDEX idx_con_emolbb_structure_id on $concordanceTable (structure_id)"
-        createConcordanceCdidIndexSql = "CREATE INDEX idx_con_emolbb_cd_id on $concordanceTable (cd_id)"
+        createConcordanceStructureIdIndexSql = "CREATE INDEX idx_con_emol${emolecules.section}_structure_id on $concordanceTable (structure_id)"
+        createConcordanceCdidIndexSql = "CREATE INDEX idx_con_emol${emolecules.section}_cd_id on $concordanceTable (cd_id)"
         
         deleteAliasesSql = "DELETE FROM $chemcentralStructureAliasesTable WHERE alias_type = ?"
         
@@ -124,8 +124,8 @@ class EMoleculesETL extends AbstractETL {
     }
     
     void createConcordanceTable(Sql db) {
-        Utils.executeMayFail(db, 'drop concordance table', 'DROP TABLE ' + concordanceTable)
-        Utils.execute(db, 'create concordance table', createConcordanceTableSql)
+        Utils.executeMayFail(db, "drop concordance table $concordanceTable", 'DROP TABLE ' + concordanceTable)
+        Utils.execute(db, "create concordance table $concordanceTable", createConcordanceTableSql)
     }
     
     void loadData(Sql reader, Sql writer, StructureLoader loader) {
@@ -133,11 +133,17 @@ class EMoleculesETL extends AbstractETL {
         
         int count = 0
         reader.eachRow(readStructuresSql) { row ->
-            int cdid = loader.execute(new String(row['cd_structure']))
-            //println cdid
-            writer.executeInsert(insertConcordanceSql, [Math.abs(cdid), row['cd_id']])
             count++
-            if (count % 1000 == 0) {
+            try {
+                int cdid = loader.execute(new String(row['cd_structure']))
+                //println cdid
+                writer.executeInsert(insertConcordanceSql, [Math.abs(cdid), row['cd_id']])
+     
+            } catch (Exception ex) {
+                println "WARNING: failed to process row $count"
+                ex.printStackTrace()
+            }
+            if (count % 10000 == 0) {
                 println "Handled $count rows"
             }
         }

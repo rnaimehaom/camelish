@@ -143,10 +143,16 @@ class ChemblETL extends AbstractETL {
         
         int count = 0
         reader.eachRow(readChemblStructuresSql) { row ->
-            int cdid = loader.execute(row['molfile'])
-            //println cdid
-            writer.executeInsert(insertConcordanceSql, [Math.abs(cdid), row['molregno']])
             count++
+            try {
+                int cdid = loader.execute(row['molfile'])
+                //println cdid
+                writer.executeInsert(insertConcordanceSql, [Math.abs(cdid), row['molregno']])
+            } catch (Exception ex) {
+                println "WARNING: failed to process row $count"
+                ex.printStackTrace()
+            }
+
             if (count % 10000 == 0) {
                 println "Handled $count rows"
             }

@@ -53,31 +53,39 @@ public class MoleculeUtils {
     public String exportAsString(Molecule mol) throws IOException {
         return MolExporter.exportToFormat(mol, exportFormat);
     }
-    
-//    public static Processor createChemTermsProcessor(String chemTerms, Class cls) {
-//        return new Processor() {
-//            @Override
-//            public Integer process(Molecule mol) {
-//                return 0;
-//            }
-//        };
-//    }
-//    
-//    public interface Processor<T> {
-//        T process(Molecule mol);
-//    }
-    
-     /** Finds the parent structure. If there is only one fragment it returns the 
-     * input molecule (same instance). If there are multiple fragments if returns 
-     * the biggest by atom count. If multiple fragments have the same number of 
-     * atoms then the one with the biggest mass is returned. If multiple ones have 
-     * the same atom count and mass it is assumed they are the same (which is not
-     * necessarily the case) and the first is returned.
+
+    /** Export the molecule in text format using the formats specified. They are tried 
+     * in order (left to right) and the first one that works is used.  
      * 
-     * 
+     * @param mol The molecule to convert
+     * @param format The formats to try
+     * @return
+     * @throws IOException Thrown if none of the specified formats work
+     */
+    public static String exportAsString(Molecule mol, String... format) throws IOException {
+        IOException ex = null;
+        for (String f : format) {
+            try {
+                return MolExporter.exportToFormat(mol, f);
+            } catch (IOException e) {
+                ex = e;
+            }
+        }
+        throw ex;
+    }
+
+    /**
+     * Finds the parent structure. If there is only one fragment it returns the
+     * input molecule (same instance). If there are multiple fragments if
+     * returns the biggest by atom count. If multiple fragments have the same
+     * number of atoms then the one with the biggest mass is returned. If
+     * multiple ones have the same atom count and mass it is assumed they are
+     * the same (which is not necessarily the case) and the first is returned.
+     *
+     *
      * @param mol The molecule to examine
      * @return The parent fragment, or null if none can be found
-    */
+     */
     public static Molecule findParentStructure(Molecule mol) {
         Molecule[] frags = mol.cloneMolecule().convertToFrags();
         if (frags.length == 1) {
@@ -85,29 +93,29 @@ public class MoleculeUtils {
         } else {
             int maxAtoms = 0;
             List<Molecule> biggestByAtomCount = new ArrayList<>();
-            for (Molecule f: frags) {
+            for (Molecule f : frags) {
                 int ac = f.getAtomCount() + f.getImplicitHcount();
                 if (ac > maxAtoms) {
                     biggestByAtomCount.clear();
                     biggestByAtomCount.add(f);
                     maxAtoms = ac;
-                } else if(f.getAtomCount() == maxAtoms) {
+                } else if (f.getAtomCount() == maxAtoms) {
                     biggestByAtomCount.add(f);
-                } 
+                }
             }
             if (biggestByAtomCount.size() == 1) {
                 return biggestByAtomCount.get(0);
-            } else /*if (biggestByAtomCount.size() > 1)*/ {
+            } else {
                 List<Molecule> biggestByMass = new ArrayList<>();
-                
+
                 double maxMass = 0;
-                for (Molecule f: biggestByAtomCount) {
+                for (Molecule f : biggestByAtomCount) {
                     double mass = f.getMass();
                     if (mass > maxMass) {
                         biggestByMass.clear();
                         biggestByMass.add(f);
                         maxMass = mass;
-                    } else if(f.getMass() == maxMass) {
+                    } else if (f.getMass() == maxMass) {
                         biggestByMass.add(f);
                     }
                 }
@@ -116,10 +124,7 @@ public class MoleculeUtils {
                 } else { // strange?
                     return null;
                 }
-            } /*else { // strange?
-                return null;
-            }*/
+            }
         }
     }
-   
 }

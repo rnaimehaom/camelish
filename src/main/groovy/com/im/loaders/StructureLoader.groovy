@@ -8,6 +8,7 @@ import chemaxon.struc.Molecule
 import chemaxon.formats.MolImporter
 import chemaxon.formats.MolExporter
 import groovy.sql.Sql
+import com.im.chemaxon.molecule.MoleculeUtils
 
 /**
  *
@@ -58,7 +59,7 @@ class StructureLoader {
     
     private int insertStructure(Molecule mol) {
         String format = mol.inputFormat
-        uh.structure = MolExporter.exportToFormat(mol, format) 
+        uh.structure = MoleculeUtils.exportAsString(mol, format, 'mol', 'mrv') 
         int id = uh.execute(true)
         return id
     }

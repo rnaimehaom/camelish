@@ -4,10 +4,11 @@
  * and open the template in the editor.
  */
 
-package com.im.chemaxon.molecule;
+package com.im.chemaxon.processor;
 
 import chemaxon.nfunk.jep.ParseException;
 import chemaxon.struc.Molecule;
+import com.im.chemaxon.molecule.ChemTermsEvaluator;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.camel.Exchange;

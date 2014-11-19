@@ -154,3 +154,8 @@ task drugbankETL(dependsOn: 'classes', type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 }
 
+task emoleculesETL(dependsOn: 'classes', type: JavaExec) {
+    main = 'com.im.loaders.EMoleculesETL'
+    classpath = sourceSets.main.runtimeClasspath
+}
+

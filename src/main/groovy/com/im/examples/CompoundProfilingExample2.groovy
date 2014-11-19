@@ -1,7 +1,7 @@
 package com.im.examples
 
 import chemaxon.struc.Molecule
-import com.im.chemaxon.molecule.ChemTermsProcessor
+import com.im.chemaxon.processor.ChemTermsProcessor
 import chemaxon.formats.MolImporter
 import groovy.sql.Sql
 import org.apache.camel.*
