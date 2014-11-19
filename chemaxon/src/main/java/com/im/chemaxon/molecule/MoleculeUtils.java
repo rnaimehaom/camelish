@@ -7,6 +7,8 @@ import chemaxon.struc.MolAtom;
 import chemaxon.struc.Molecule;
 import chemaxon.struc.MoleculeGraph;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -64,5 +66,60 @@ public class MoleculeUtils {
 //    public interface Processor<T> {
 //        T process(Molecule mol);
 //    }
+    
+     /** Finds the parent structure. If there is only one fragment it returns the 
+     * input molecule (same instance). If there are multiple fragments if returns 
+     * the biggest by atom count. If multiple fragments have the same number of 
+     * atoms then the one with the biggest mass is returned. If multiple ones have 
+     * the same atom count and mass it is assumed they are the same (which is not
+     * necessarily the case) and the first is returned.
+     * 
+     * 
+     * @param mol The molecule to examine
+     * @return The parent fragment, or null if none can be found
+    */
+    public static Molecule findParentStructure(Molecule mol) {
+        Molecule[] frags = mol.cloneMolecule().convertToFrags();
+        if (frags.length == 1) {
+            return mol; // the orginal molecule
+        } else {
+            int maxAtoms = 0;
+            List<Molecule> biggestByAtomCount = new ArrayList<>();
+            for (Molecule f: frags) {
+                int ac = f.getAtomCount() + f.getImplicitHcount();
+                if (ac > maxAtoms) {
+                    biggestByAtomCount.clear();
+                    biggestByAtomCount.add(f);
+                    maxAtoms = ac;
+                } else if(f.getAtomCount() == maxAtoms) {
+                    biggestByAtomCount.add(f);
+                } 
+            }
+            if (biggestByAtomCount.size() == 1) {
+                return biggestByAtomCount.get(0);
+            } else /*if (biggestByAtomCount.size() > 1)*/ {
+                List<Molecule> biggestByMass = new ArrayList<>();
+                
+                double maxMass = 0;
+                for (Molecule f: biggestByAtomCount) {
+                    double mass = f.getMass();
+                    if (mass > maxMass) {
+                        biggestByMass.clear();
+                        biggestByMass.add(f);
+                        maxMass = mass;
+                    } else if(f.getMass() == maxMass) {
+                        biggestByMass.add(f);
+                    }
+                }
+                if (biggestByMass.size() > 0) {
+                    return biggestByMass.get(0);
+                } else { // strange?
+                    return null;
+                }
+            } /*else { // strange?
+                return null;
+            }*/
+        }
+    }
    
 }
