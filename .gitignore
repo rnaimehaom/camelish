@@ -13,3 +13,4 @@ fabric8/profiles/lac/bioassay/curvefit/target
 loaders/*.properties
 /fabric8/profiles/lac/chemistry/java-cdi/target/
 /data/filedrop
+/empiredb/hsqldb
