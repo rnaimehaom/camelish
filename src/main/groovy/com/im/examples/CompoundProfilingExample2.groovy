@@ -9,8 +9,8 @@ import org.apache.camel.impl.*
 import org.apache.camel.builder.*
 
 ConfigObject database = new ConfigSlurper().parse(new File('loaders/database.properties').toURL())
+ConfigObject drugbank = new ConfigSlurper().parse(new File('loaders/drugbank.properties').toURL())
 
-//Sql db = Sql.newInstance('jdbc:mysql://localhost/vendordbs', 'vendordbs', 'vendordbs')
 Sql db = Sql.newInstance(database.url, 'vendordbs', 'vendordbs')
 
 Processor dbQuery = new Processor() {
@@ -54,7 +54,8 @@ camelContext.start()
 In this case each route is called on a request/response basis
 */
 ProducerTemplate t = camelContext.createProducerTemplate()
-def mols1 = t.requestBody('direct:drugBankMoleculeStream', 'select * from DRUGBANK_FEB_2014 where cd_molweight > 300 and cd_molweight < 600 limit 100')
+def mols1 = t.requestBody('direct:drugBankMoleculeStream', \
+    "select cd_id, cd_structure from ${drugbank.table} where cd_molweight > 300 and cd_molweight < 600 limit 100")
 def mols2 = t.requestBody('direct:chemTermsCalculator', mols1)
 def result = t.requestBody('direct:python', mols2)
 println "Result = $result"

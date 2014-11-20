@@ -8,17 +8,18 @@ import org.apache.camel.ProducerTemplate
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.impl.DefaultCamelContext
 
-import java.sql.Connection
-import java.sql.DriverManager
+import groovy.sql.Sql
 
 /**
  * Created by timbo on 26/04/2014.
  */
 
+ConfigObject database = new ConfigSlurper().parse(new File('loaders/database.properties').toURL())
+ConfigObject drugbank = new ConfigSlurper().parse(new File('loaders/drugbank.properties').toURL())
+Sql db = Sql.newInstance(database.url, 'vendordbs', 'vendordbs')
 
-Connection con = DriverManager.getConnection('jdbc:derby:/Users/timbo/IJCProjects/SearchableDBs/.config/localdb/db;upgrade=true')
 
-AbstractJChemSearcher searcher = new AbstractJChemSearcher('DRUGBANKALL', 't:s') {
+AbstractJChemSearcher searcher = new AbstractJChemSearcher(drugbank.table, 't:s') {
     @Override
     protected void handleSearchParams(Exchange exchange, JChemSearch jcs) {
         jcs.setQueryStructure(exchange.in.body)
@@ -31,7 +32,7 @@ AbstractJChemSearcher searcher = new AbstractJChemSearcher('DRUGBANKALL', 't:s')
     }
 
 }
-searcher.connection = con
+searcher.connection = db.connection
 
 CamelContext camelContext = new DefaultCamelContext()
 camelContext.addRoutes(new RouteBuilder() {

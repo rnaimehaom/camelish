@@ -3,6 +3,10 @@
 import chemaxon.jchem.db.TableTypeConstants
 
 /* ============== change these ============== */
+
+// download eMolecules from http://emolecules.com/info/plus/download-database
+path='/home/timbo/data/structures/emolecules'
+
 //section='sc'
 //description='eMolecules screening compounds'
 //estSize = 5638174
@@ -28,9 +32,6 @@ tableType=TableTypeConstants.TABLE_TYPE_MOLECULES
 standardizer='src/misc/standardizer.xml'
 extraColumnDefs=['version_id INTEGER', 'parent_id INTEGER']
 processors=2
-
-// download eMolecules from http://emolecules.com/info/plus/download-database
-path='/home/timbo/data/structures/emolecules'
 
 owner='public'
 maintainer='timdudgeon'

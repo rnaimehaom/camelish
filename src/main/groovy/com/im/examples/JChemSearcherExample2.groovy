@@ -5,6 +5,7 @@ import chemaxon.sss.search.JChemSearchOptions
 import com.im.chemaxon.camel.db.AbstractJChemSearcher
 import com.im.chemaxon.io.MoleculeIOUtils
 import groovy.util.logging.Log
+import groovy.sql.Sql
 import org.apache.camel.CamelContext
 import org.apache.camel.Exchange
 import org.apache.camel.ProducerTemplate
@@ -17,7 +18,11 @@ import java.util.logging.Logger
 
 Logger logger = Logger.getLogger(this.class.getName())
 
-AbstractJChemSearcher searcher = new AbstractJChemSearcher('MAYBRIDGESCREENINGCOLLECTION', 'sep=, t:i,dissimilarityThreshold:0.25') {
+ConfigObject database = new ConfigSlurper().parse(new File('loaders/database.properties').toURL())
+ConfigObject drugbank = new ConfigSlurper().parse(new File('loaders/drugbank.properties').toURL())
+Sql db = Sql.newInstance(database.url, 'vendordbs', 'vendordbs')
+
+AbstractJChemSearcher searcher = new AbstractJChemSearcher(drugbank.table, 'sep=, t:i,dissimilarityThreshold:0.25') {
     
     @Override
     protected void handleSearchParams(Exchange exchange, JChemSearch jcs) {
@@ -31,13 +36,15 @@ AbstractJChemSearcher searcher = new AbstractJChemSearcher('MAYBRIDGESCREENINGCO
         exchange.out.setBody(result)
     }
 }
-searcher.connection = DriverManager.getConnection('jdbc:derby:/Users/timbo/IJCProjects/SearchableDBs/.config/localdb/db;upgrade=true')
+searcher.connection = db.connection
 
 CamelContext camelContext = new DefaultCamelContext()
 camelContext.addRoutes(new RouteBuilder() {
         def void configure() {
-            from("direct:filesgohere")
+            
+            from("file:data/filedrop/JChemSearcherExample2?move=out")
             .log('Processing ${file:name}')
+            .to('direct:uncompressFile')
             .split().method(MoleculeIOUtils.class, "mrecordIterator")
             .aggregationStrategy(new SimSearchResultAggregator())
             .log('Processing record ${property.CamelSplitIndex}')
@@ -51,21 +58,24 @@ camelContext.addRoutes(new RouteBuilder() {
                 exch.in.body.hitscores.each { k, v -> println "$k => $v" }
                 println "Total of ${exch.in.body.hitscores.size()} hits"
             }
+            
+            from('direct:uncompressFile')
+            .choice()
+            .when(header("CamelFileName").endsWith(".gz")).unmarshal().gzip()
+            .when(header("CamelFileName").endsWith(".zip")).unmarshal().zip()
+            .endChoice()
+                
         }
     })
 
 camelContext.start()
 
-ProducerTemplate t = camelContext.createProducerTemplate()
-t.sendBody('direct:filesgohere', new File('/Users/timbo/IJCProjects/SearchableDBs/66-randoms.sdf'))
-sleep(2000)
-camelContext.stop()
+println "Ready to process. Drop files into data/filedrop/JChemSearcherExample2 to process"
+println "Will run for 5 mins or use Ctrl-C to finish"
 
-try {
-    DriverManager.getConnection('jdbc:derby:/Users/timbo/IJCProjects/SearchableDBs/.config/localdb/db;shutdown=true')
-} catch (Exception e) {
-    logger.info("DB shutdown")
-}
+sleep(300000)
+db.close()
+
 // END of main script
 
 class SearchResult {
