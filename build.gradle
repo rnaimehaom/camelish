@@ -18,6 +18,9 @@ allprojects {
     repositories {
         mavenCentral()
         maven {
+            url "http://maven.restlet.org"
+        }
+        maven {
             credentials {
                 username "tdudgeon"
                 password "tdudgeon"
@@ -34,6 +37,9 @@ allprojects {
         compile "org.apache.camel:camel-jdbc:$camelVersion"
         compile "org.apache.camel:camel-jetty:$camelVersion"
         compile "org.apache.camel:camel-http4:$camelVersion"
+        compile "org.apache.camel:camel-restlet:$camelVersion"
+        compile "org.apache.camel:camel-jackson:$camelVersion"
+        //compile "org.apache.camel:camel-cxf:$camelVersion"
         //compile "org.apache.camel:camel-csv:$camelVersion"
         //compile "org.apache.camel:camel-groovy:$camelVersion"
         //compile "org.apache.camel:camel-script:$camelVersion"
