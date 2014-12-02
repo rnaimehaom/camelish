@@ -2,11 +2,8 @@
 group = 'im.camelish'
 description = 'Camel tools for life sciences'
 
-apply plugin: 'idea'
-
-
 project.ext.set('camelVersion', '2.14.0')
-    
+
 allprojects {
     apply plugin: 'java'
     apply plugin: 'groovy'
@@ -31,6 +28,7 @@ allprojects {
 
     dependencies {
         
+        
         compile "org.codehaus.groovy:groovy-all:2.2.2"
 
         compile "org.apache.camel:camel-core:$camelVersion"
@@ -50,6 +48,7 @@ allprojects {
 }
 
 dependencies {
+    
     compile "org.apache.derby:derby:10.10.1.1"
     compile "mysql:mysql-connector-java:5.1.13"
     compile "org.postgresql:postgresql:9.3-1102-jdbc41"
