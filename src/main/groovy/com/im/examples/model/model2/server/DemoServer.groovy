@@ -1,4 +1,6 @@
-package com.im.examples.model.model2
+package com.im.examples.model.model2.server
+
+import com.im.examples.model.model2.*
 
 import javax.sql.DataSource
 import chemaxon.formats.MolImporter
@@ -27,94 +29,13 @@ class DemoServer {
     }
     
     
-    /** this simulates the client
-     */
-    static void main(String[] args) {
-        def server = new DemoServer()
-        try {
-   
-            execute("Cleaning...") {
-                server.clean()
-                println "  clean complete"
-            }
-    
-            // This simulates generating an intial dataset based on a query
-            SubsetInfo listInfo
-            execute("Generating list for query") {
-                listInfo = server.queryForStructuresAsList('tim', 'test 1', null)
-                println "  generated results for list $listInfo.id"
-            }
-            
-    
-            // this simulates restoring a persisted dataset and making it available for use
-            String datasetName = 'tmpdata'
-            execute("Restoring dataset $listInfo.id as $datasetName") {
-                server.restoreDataSet(datasetName, listInfo.id)
-                println "  dataset restored"
-            }
-    
-            //            // create molecules and fingerprints. Are these persisted or generated dynamically?
-            //            execute("Structurising") {
-            //                //server.structurise(datasetName)
-            //            }
-    
-            // run a simple filter
-            SubsetInfo filterInfo
-            execute("Simple filtering") {
-                /* This is stop-gap measure to provide filtering just by passing a closure 
-                 * that does the filtering.
-                 * TODO - Need to establish how this would best be implemented.
-                 */
-                filterInfo = server.filter(datasetName, 'tim') { dataset -> 
-                    // simple case of taking the first 100
-                    def hits = []
-                    def keys = dataset.members.keySet()
-                    (0..99).each {
-                        hits << keys[it]
-                    }
-                    return hits
-                }
-                println "  filter $filterInfo.id generated with $filterInfo.size results"
-            }
-            
-            execute("Merging properties") {
-                server.mergeProperties(datasetName, 1, 'drugbank') { json ->
-                    def props = [:]
-                    props['DrugBankID'] = json.drugbank_id
-                    props['Brands'] = json.brands
-                    props['Generic name'] = json.generic_name
-                    
-                    return props
-                }
-                println "  merge complete"
-            }
-            
-            execute("Getting data") {
-                def data = server.fetchData(datasetName, filterInfo.id)
-                println "  fetched ${data.size()} rows"
-            }
-            
-            execute("Cleaning...") {
-                server.clean()
-                println "  clean complete"
-            }
-        } finally {
-            server.close()
-        }
-    }
-
-    static def execute(String desc, Closure closure) {
-        println desc
-        long t0 = System.currentTimeMillis()
-        closure()
-        long t1 = System.currentTimeMillis()
-        println "  took ${t1-t0}ms"
-    }  
-    
-    /* ---------------- Sever methods --------------------- */
-    
     void close() {
         db?.close()
+    }
+    
+    DataSet createDataSet(Object id) {
+        DataSet dataset = new DataSet(id)
+        datasets[id] = dataset
     }
     
     void restoreDataSet(Object id, int listId) {
@@ -191,7 +112,7 @@ class DemoServer {
     
     SubsetInfo filter(String datasetName, String owner, Closure closure) {
         DataSet dataset = datasets[datasetName]
-        RowSet.Filter filter = dataset.createFilter(owner, closure)
+        Filter filter = dataset.createFilter(owner, closure)
         return new SubsetInfo(filter.uuid, filter.created, filter.owner, filter.ids.size())
     }
     
@@ -256,12 +177,4 @@ class DemoServer {
         def m = MolImporter.importMol(thing)
         m
     }  
-
-    @Canonical
-    class SubsetInfo {
-        Object id
-        Date created
-        String owner
-        int size
-    }
 }

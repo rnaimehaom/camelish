@@ -15,7 +15,7 @@ class ChemTermsProcessorSpecification extends CamelSpecificationBase {
 
     def resultEndpoint
 
-    def 'ChemTerms processor'() {
+    def 'ChemTerms processor for List'() {
 
         given:
         resultEndpoint = camelContext.getEndpoint('mock:result')
@@ -39,6 +39,29 @@ class ChemTermsProcessorSpecification extends CamelSpecificationBase {
         result[0].getPropertyObject('bond_count') == 4
         result[1].getPropertyObject('bond_count') == 7
         result[2].getPropertyObject('bond_count') == 10
+    }
+    
+     def 'ChemTerms processor for Molecule'() {
+
+        given:
+        resultEndpoint = camelContext.getEndpoint('mock:result')
+        resultEndpoint.expectedMessageCount(2)
+        
+
+        when:
+        def mol0 = MolImporter.importMol('C')
+        def mol1 = MolImporter.importMol('CC')  
+        template.sendBody('direct:chemTermsCalculator', mol0)
+        template.sendBody('direct:chemTermsCalculator', mol1)
+        
+
+        then:
+        resultEndpoint.assertIsSatisfied()
+        Molecule result0 = resultEndpoint.receivedExchanges.in.body[0]
+        Molecule result1 = resultEndpoint.receivedExchanges.in.body[1]
+        result0.getPropertyObject('atom_count') == 5
+        result1.getPropertyObject('atom_count') == 8
+        
     }
 
     @Override

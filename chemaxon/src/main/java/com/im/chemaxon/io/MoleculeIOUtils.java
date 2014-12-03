@@ -9,7 +9,6 @@ import chemaxon.marvin.io.MRecordParseException;
 import chemaxon.marvin.io.MRecordReader;
 import chemaxon.struc.MProp;
 import chemaxon.struc.Molecule;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
