@@ -148,7 +148,7 @@ class DemoServer {
     }
 
     
-    SubsetInfo queryForStructuresAsList(String username, String listname, def query /*ignored for now */) {
+    SubsetInfo queryForFirstStructuresAsList(String username, String listname, int count) {
         int listId = generateHitList(username, listname)
         
         println "  executing query against structures"
@@ -156,12 +156,29 @@ class DemoServer {
                     INSERT INTO users.hit_list_data (hit_list_id, id_item)
                     (SELECT ?, cd_id
                       FROM chemcentral_01.structures
-                      WHERE frag_count = 1 AND cd_id < 2000)""", [listId]) 
+                      WHERE frag_count = 1 AND cd_id < ?)""", [listId, count]) 
         println "  query complete"
         // TODO: handle list size 
         return new SubsetInfo(listId, new Date(), 'username', 0)
     }
     
+      SubsetInfo queryForStructuresForPropertyDef(String username, String listname, String propOrigId) {
+        int listId = generateHitList(username, listname)
+        
+        println "  executing query against structures for original_id = $propOrigId generating list id = $listId"
+        db.executeInsert("""\
+            |INSERT INTO users.hit_list_data (id_item, hit_list_id)
+            | (SELECT distinct(st.cd_id), ?
+            |    FROM chemcentral_01.structures st
+            |    JOIN chemcentral_01.structure_props sp ON sp.structure_id = st.cd_id
+            |    JOIN chemcentral_01.property_definitions pd ON pd.property_id = sp.property_id 
+            |    WHERE pd.original_id = ?)""".stripMargin(), [listId, propOrigId]) 
+        println "  query complete"
+        // TODO: handle list size 
+        return new SubsetInfo(listId, new Date(), 'username', 0)
+    }
+    
+
     private Map buildRowData(def row) {
         def o  = [:]
         o.id = row['cd_id']
