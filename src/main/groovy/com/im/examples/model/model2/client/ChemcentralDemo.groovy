@@ -95,7 +95,7 @@ try {
                 def props = [:]
                 String v_str = json.standard_value
                 String q_str = json.standard_relation
-                props['value'] = new QualifiedValue(new Float(v_str), q_str) 
+                props['value'] = new QualifiedValue(new Float(v_str), q_str)
                     
                 return props
             }

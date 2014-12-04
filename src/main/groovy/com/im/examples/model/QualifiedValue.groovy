@@ -51,6 +51,11 @@ class QualifiedValue<T extends Number> implements Comparable<T> {
         this.qualifier = q
     }
     
+    QualifiedValue(T v, String q) {
+        this.value = v
+        this.qualifier = Qualifier.create(q)
+    }
+    
     QualifiedValue(QualifiedValue qv) {
         this.value = qv.value
         this.qualifier = qq.qualifier
