@@ -75,6 +75,11 @@ task wrapper(type: Wrapper) {
 }
 
 
+task execute(type:JavaExec) {
+   main = mainClass
+   classpath = sourceSets.main.runtimeClasspath
+}
+
 task drugbankCreateTables(dependsOn: 'classes', type: JavaExec) {
     main = 'com.im.loaders.DrugbankLoader'
     args = ['createTables']

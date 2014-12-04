@@ -51,7 +51,7 @@ try {
     }
             
     execute("Merging properties") {
-        server.mergeProperties(datasetName, 1, 'drugbank') { json ->
+        server.mergeProperties(datasetName, 'DrugBank', 'drugbank') { json ->
             def props = [:]
             props['DrugBankID'] = json.drugbank_id
             props['Brands'] = json.brands

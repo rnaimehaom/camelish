@@ -80,19 +80,20 @@ class DemoServer {
         return results
     }
     
-    void mergeProperties(String datasetName, int propertyDefId, String propName, Closure closure) {
+    void mergeProperties(String datasetName, String propertyDefOrigId, String propName, Closure closure) {
         def dataset = datasets[datasetName]
         RowSet childRowset = dataset.createChildRowSet(propName)
-        def ex = childRowset.createDataExtractor(propertyDefId, closure)
+        def ex = childRowset.createDataExtractor(propertyDefOrigId, closure)
         
         db.eachRow("""\
             |SELECT p.id, p.structure_id, p.property_data
             |  FROM chemcentral_01.structure_props p
             |  JOIN chemcentral_01.structures s ON p.structure_id = s.cd_id
+            |  JOIN chemcentral_01.property_definitions pd ON p.property_id = pd.property_id
             |  JOIN users.hit_list_data d ON d.id_item = s.cd_id
             |  JOIN users.hit_lists l ON l.id = d.hit_list_id
-            |  WHERE l.id = ? AND p.property_id = ?""".stripMargin(), 
-            [dataset.listId, propertyDefId]) { row ->
+            |  WHERE l.id = ? AND pd.original_id = ?""".stripMargin(), 
+            [dataset.listId, propertyDefOrigId]) { row ->
             
             def json = jsonSlurper.parseText(row['property_data'] as String)
             //            Map data = closure(json)
