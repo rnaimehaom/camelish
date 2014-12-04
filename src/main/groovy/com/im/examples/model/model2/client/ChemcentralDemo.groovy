@@ -123,7 +123,6 @@ static def execute(String desc, Closure closure) {
     rt.gc()
     long f0 = rt.freeMemory()
     long m0 = rt.totalMemory()
-    //println "  memory before: $m0 $f0 = ${m0 - f0}"
     long t0 = System.currentTimeMillis()
     def result = closure()
     long t1 = System.currentTimeMillis()
@@ -131,7 +130,8 @@ static def execute(String desc, Closure closure) {
     long f1 = rt.freeMemory()
     long m1 = rt.totalMemory()
     println "  took ${t1-t0}ms"
-    //println "  memory after: $m1 $f1 = ${m1 - f1}"
-    println "  memory used: ${(m1-f1) - (m0-f0)}"
+    println "  memory before: ${m0 - f0}"
+    println "  memory after: ${m1 - f1}"
+    println "  memory diff: ${(m1-f1) - (m0-f0)}"
     return result
 }  
