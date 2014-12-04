@@ -42,6 +42,7 @@ class DemoServer {
         DataSet dataset = fetchStructuresForList(listId)
         dataset.listId = listId
         datasets[id] = dataset
+        println "  dataset $id restored. ${dataset.members.size()} rows"
     }
     
     //    void structurise(String name) {
@@ -84,7 +85,7 @@ class DemoServer {
         def dataset = datasets[datasetName]
         RowSet childRowset = dataset.createChildRowSet(propName)
         def ex = childRowset.createDataExtractor(propertyDefOrigId, closure)
-        
+        int count = 0
         db.eachRow("""\
             |SELECT p.id, p.structure_id, p.property_data
             |  FROM chemcentral_01.structure_props p
@@ -95,6 +96,7 @@ class DemoServer {
             |  WHERE l.id = ? AND pd.original_id = ?""".stripMargin(), 
             [dataset.listId, propertyDefOrigId]) { row ->
             
+            count++
             def json = jsonSlurper.parseText(row['property_data'] as String)
             //            Map data = closure(json)
             int structureId = row['structure_id']
@@ -107,7 +109,7 @@ class DemoServer {
             ex.extract(structureId, propertyId, json)
             
         }
-        //println "  $propName data: ${childRowset.members.values()}"
+        println "  merged $count rows for $propName"
     }
     
     
