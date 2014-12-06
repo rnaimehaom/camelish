@@ -2,6 +2,10 @@
 group = 'im.camelish'
 description = 'Camel tools for life sciences'
 
+//apply plugin: "application"
+//
+//mainClassName = System.getProperty("mainClass")
+
 project.ext.set('camelVersion', '2.14.0')
 
 allprojects {
@@ -73,12 +77,6 @@ task wrapper(type: Wrapper) {
     gradleVersion = '2.2.1'
     jarFile = 'wrapper/wrapper.jar'
 }
-
-
-//task execute(type:JavaExec) {
-//   main = mainClass
-//   classpath = sourceSets.main.runtimeClasspath
-//}
 
 task drugbankCreateTables(dependsOn: 'classes', type: JavaExec) {
     main = 'com.im.loaders.DrugbankLoader'

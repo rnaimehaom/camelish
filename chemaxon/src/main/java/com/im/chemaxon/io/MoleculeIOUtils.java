@@ -17,13 +17,12 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.im.chemaxon.molecule.MoleculeConstants;
 
 /**
  * Created by timbo on 14/04/2014.
  */
-public class MoleculeIOUtils {
-
-    public static final String STRUCTURE_FIELD_NAME = "MOLECULE_AS_STRING";
+public class MoleculeIOUtils implements MoleculeConstants {
 
     static Logger log = Logger.getLogger(MoleculeIOUtils.class.getName());
 

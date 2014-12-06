@@ -136,14 +136,14 @@ class RowSet {
             this.id = id
             this.data = (data ?: [:])
         }
-        
-        @Override
-        public String toString() {
-            return "id $id $id [$data]"
-        }
  
         Set getChildren(RowSet childRowSet) {
             getChildren(childRowSet, this)
+        }
+        
+        @Override
+        public String toString() {
+            return "Row [parent: ${RowSet.this.id} id: $id ${data.size()} data items]"
         }
     }
     
