@@ -1,6 +1,6 @@
 package com.im.examples.model.model2.client
 
-import com.im.examples.model.QualifiedValue
+import com.im.examples.model.types.QualifiedValue
 import com.im.examples.model.model2.*
 import com.im.examples.model.model2.server.DemoServer
 

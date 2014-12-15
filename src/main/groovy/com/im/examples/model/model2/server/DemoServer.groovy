@@ -88,9 +88,9 @@ class DemoServer {
         int count = 0
         db.eachRow("""\
             |SELECT p.id, p.structure_id, p.property_data
-            |  FROM chemcentral_01.structure_props p
-            |  JOIN chemcentral_01.structures s ON p.structure_id = s.cd_id
-            |  JOIN chemcentral_01.property_definitions pd ON p.property_id = pd.property_id
+            |  FROM ${chemcentral.structurePropsTable} p
+            |  JOIN ${chemcentral.structuresTable} s ON p.structure_id = s.cd_id
+            |  JOIN ${chemcentral.propertyDefinitionsTable} pd ON p.property_id = pd.property_id
             |  JOIN users.hit_list_data d ON d.id_item = s.cd_id
             |  JOIN users.hit_lists l ON l.id = d.hit_list_id
             |  WHERE l.id = ? AND pd.original_id = ?""".stripMargin(), 
@@ -139,7 +139,7 @@ class DemoServer {
         DataSet dataset = new DataSet("Data $listId")
         db.eachRow("""\
                     SELECT cd_id, cd_structure
-                      FROM chemcentral_01.structures s
+                      FROM ${chemcentral.structuresTable} s
                       JOIN users.hit_list_data d ON d.id_item = s.cd_id
                       JOIN users.hit_lists l ON l.id = d.hit_list_id
                       WHERE l.id = ?""", [listId]) { row ->
@@ -155,10 +155,10 @@ class DemoServer {
         
         println "  executing query against structures"
         db.executeInsert("""\
-                    INSERT INTO users.hit_list_data (hit_list_id, id_item)
-                    (SELECT ?, cd_id
-                      FROM chemcentral_01.structures
-                      WHERE frag_count = 1 AND cd_id < ?)""", [listId, count]) 
+                    |INSERT INTO users.hit_list_data (hit_list_id, id_item)
+                    |  (SELECT ?, cd_id
+                    |    FROM ${chemcentral.structuresTable}
+                    |    WHERE frag_count = 1 AND cd_id < ?)""".stripMargin(), [listId, count]) 
         println "  query complete"
         // TODO: handle list size 
         return new SubsetInfo(listId, new Date(), 'username', 0)
@@ -171,9 +171,9 @@ class DemoServer {
         db.executeInsert("""\
             |INSERT INTO users.hit_list_data (id_item, hit_list_id)
             | (SELECT distinct(st.cd_id), ?
-            |    FROM chemcentral_01.structures st
-            |    JOIN chemcentral_01.structure_props sp ON sp.structure_id = st.cd_id
-            |    JOIN chemcentral_01.property_definitions pd ON pd.property_id = sp.property_id 
+            |    FROM ${chemcentral.structuresTable} st
+            |    JOIN ${chemcentral.structurePropsTable} sp ON sp.structure_id = st.cd_id
+            |    JOIN ${chemcentral.propertyDefinitionsTable} pd ON pd.property_id = sp.property_id 
             |    WHERE pd.original_id = ?)""".stripMargin(), [listId, propOrigId]) 
         println "  query complete"
         // TODO: handle list size 

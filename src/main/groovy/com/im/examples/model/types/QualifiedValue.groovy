@@ -1,4 +1,4 @@
-package com.im.examples.model
+package com.im.examples.model.types
 
 import java.util.regex.Pattern
 
@@ -9,9 +9,10 @@ import java.util.regex.Pattern
  * The answer is a little subjective (and so may need to be configurable), but 
  * generally speaking the first answer is probably the right one.
  * 
- * TODO - convert this to Java for efficiency purposes
+ * TODO - assess whether this should be changed to Java, but the dynamic aspects 
+ * are pretty useful when it comes to aggregation. 
  */
-class QualifiedValue<T extends Number> implements Comparable<T> {
+class QualifiedValue<T extends Number> implements Comparable<QualifiedValue> {
     
     enum Qualifier {
         EQUALS('='), 
@@ -19,7 +20,8 @@ class QualifiedValue<T extends Number> implements Comparable<T> {
         LESS_THAN('<'), 
         GREATER_THAN('>'),
         LESS_THAN_OR_EQUALS('<='), 
-        GREATER_THAN_OR_EQUALS('>=')
+        GREATER_THAN_OR_EQUALS('>='),
+        AMBIGUOUS('#') // for use in aggregations where the state is inconsistent
         
         String symbol
         
@@ -60,15 +62,15 @@ class QualifiedValue<T extends Number> implements Comparable<T> {
         this.value = qv.value
         this.qualifier = qq.qualifier
     }
-     /** Parse from a text represetnations. Values like this are supported:
-      * 123.4, <123.4, < 123.4, <-123.4, >=15.2, 1234, -0.00001234
-      * Integer, Float and Double types are supported. If your format does not match
-      * this format then parse it yourself and use one of the constructors.
-      * 
-      * @param s The text to parse
-      * @param cls the type to parse the number part to
-      * @return The value
-      */
+    /** Parse from a text represetnations. Values like this are supported:
+     * 123.4, <123.4, < 123.4, <-123.4, >=15.2, 1234, -0.00001234
+     * Integer, Float and Double types are supported. If your format does not match
+     * this format then parse it yourself and use one of the constructors.
+     * 
+     * @param s The text to parse
+     * @param cls the type to parse the number part to
+     * @return The value
+     */
     static QualifiedValue<T> parse(String s, Class<T> cls) {
         def matcher = s =~ /\s*(=|<|>|~|<=|>=)?\s*(\-?[0-9,\.]+)\s*/
         if (matcher.matches()) {
@@ -99,19 +101,54 @@ class QualifiedValue<T extends Number> implements Comparable<T> {
         throw new IllegalArgumentException("Format $s not supported")
     }
     
+    @Override
     boolean equals(Object o) {
-        println "testing $this for equality against $o"
         if (o == null) { return false }
         if (!(o instanceof QualifiedValue)) { return false }
         return value.equals(o.value) && qualifier.equals(o.qualifier)
     }
     
-    int compareTo(T o) {
-        return value.compareTo(o)
+    @Override
+    int compareTo(QualifiedValue o) {
+        return value.compareTo(o.value)
     }
     
+    @Override
     String toString() {
        "${qualifier.symbol}$value"
     }
+    
+    QualifiedValue plus(QualifiedValue other) {
+        T sum = value + other.value
+        return new QualifiedValue(sum, resolveQualifier(qualifier, other.qualifier))
+    } 
+    
+    QualifiedValue minus(QualifiedValue other) {
+        T sum = value - other.value
+        return new QualifiedValue(sum, resolveQualifier(qualifier, other.qualifier))
+    } 
+  
+    private static Qualifier resolveQualifier(Qualifier a, Qualifier b) {
+        if (a == b) {
+            return a
+        } else if (a == Qualifier.EQUALS) {
+            return b
+        } else if (b == Qualifier.EQUALS) {
+            return a
+        } else {
+            return Qualifier.AMBIGUOUS
+        }
+    }
+    
+    QualifiedValue multiply(Number num) {
+        def result = value * num
+        return new QualifiedValue(result, qualifier)
+    }
+    
+    QualifiedValue div(Number num) {
+        def result = value / num
+        return new QualifiedValue(result, qualifier)
+    }
+    
 }
 

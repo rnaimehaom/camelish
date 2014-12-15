@@ -2,6 +2,9 @@ package com.im.examples.model
 
 import javax.sql.DataSource
 import com.im.loaders.Utils
+import com.im.examples.model.aggregate.AggregateHolder
+import com.im.examples.model.aggregate.ArithmeticMean
+import com.im.examples.model.types.QualifiedValue
 import groovy.transform.Canonical
 import groovy.sql.Sql
 import groovy.json.JsonSlurper
@@ -47,10 +50,10 @@ class ChemcentralSearcher extends Searcher {
         return prop
     }
     
-    static Aggregate findOrCreateAggregate(Expando structure, Integer id) {
-        Aggregate agg = structure.aggregates[id]
+    static AggregateHolder findOrCreateAggregate(Expando structure, Integer id) {
+        AggregateHolder agg = structure.aggregates[id]
         if (!agg) {
-            agg = new Aggregate()
+            agg = new AggregateHolder()
             structure.aggregates[id] = agg
         }
         return agg
@@ -114,13 +117,13 @@ class ChemcentralSearcher extends Searcher {
 
         model.structures.each { s ->
             s.value.props.each { p ->
-                Aggregate agg = findOrCreateAggregate(s.value, p.key)
+                AggregateHolder agg = findOrCreateAggregate(s.value, p.key)
                 p.value.data.each { d ->
                     def value = d.value.standard_value
                     agg.values << value
                     def q = QualifiedValue.Qualifier.create(d.value.standard_relation)
                 }
-                agg.createAggregate(Aggregate.ArithmeticMean.class, "Assay $p.key")
+                agg.createAggregate(new ArithmeticMean("Assay $p.key"))
             }
         }
 
@@ -155,7 +158,7 @@ class ChemcentralSearcher extends Searcher {
     
     static boolean filter(def agg, float threshold) {
         if (agg && agg.aggregates.size() > 0) {
-            return agg.aggregates[0].mean < threshold
+            return agg.aggregates[0].result < threshold
         }
         return false
     }

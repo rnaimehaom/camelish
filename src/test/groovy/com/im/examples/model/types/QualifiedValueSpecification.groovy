@@ -1,8 +1,8 @@
-package com.im.examples.model
+package com.im.examples.model.types
 
 import spock.lang.Shared
 import spock.lang.Specification
-import static com.im.examples.model.QualifiedValue.Qualifier.*
+import static com.im.examples.model.types.QualifiedValue.Qualifier.*
 
 class QualifiedValueSpecification extends Specification {
     
@@ -20,6 +20,51 @@ class QualifiedValueSpecification extends Specification {
         !a.equals(c)
         !a.equals(d)
         a.equals(e)
+    }
+    
+    def "test compare"() {
+        when:
+        def a = new QualifiedValue(123.4f)
+        def b = new QualifiedValue(123.4f)
+        def c = new QualifiedValue(111.11f)
+        
+        then:
+        a.compareTo(b) == 0
+        a.compareTo(c) > 0
+        
+    }
+    
+    def "test plus"() {
+        when:
+        def a = new QualifiedValue(123.4f)
+        def b = new QualifiedValue(111.1f)
+        def c = new QualifiedValue(111.1f, LESS_THAN)
+        def d = new QualifiedValue(111.1f, GREATER_THAN)
+        def ab = a + b
+        def ac = a + c
+        def cd = c + d
+        
+        then:
+        ab.value == 234.5
+        ab.qualifier == EQUALS
+        ac.value == 234.5
+        ac.qualifier == LESS_THAN
+        cd.qualifier == AMBIGUOUS
+        
+    }
+    
+    def "test divide"() {
+        when:
+        def a = new QualifiedValue(444.0f)
+        def a4 = a / 4
+        def b = new QualifiedValue(444.0f, LESS_THAN)
+        def b4 = b / 4
+        
+        then:
+        a4.value == 111
+        a4.qualifier == EQUALS
+        b4.value == 111
+        b4.qualifier == LESS_THAN
     }
     
     
@@ -89,7 +134,7 @@ class QualifiedValueSpecification extends Specification {
         ]
     }
     
-     def "parse double values"() {
+    def "parse double values"() {
 
         expect:
         QualifiedValue.parse(values, Double.class).equals(results)
