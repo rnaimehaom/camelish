@@ -1,6 +1,6 @@
 package com.im.examples.model.model2.client
 
-import com.im.examples.model.types.QualifiedValue
+import com.im.examples.model.types.QualifiedNumber
 import com.im.examples.model.model2.*
 import com.im.examples.model.model2.server.DemoServer
 
@@ -95,7 +95,7 @@ try {
                 def props = [:]
                 String v_str = json.standard_value
                 String q_str = json.standard_relation
-                props['value'] = new QualifiedValue(new Float(v_str), q_str)
+                props['value'] = new QualifiedNumber(new Float(v_str), q_str)
                     
                 return props
             }

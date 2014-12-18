@@ -12,53 +12,27 @@ import java.util.regex.Pattern
  * TODO - assess whether this should be changed to Java, but the dynamic aspects 
  * are pretty useful when it comes to aggregation. 
  */
-class QualifiedValue<T extends Number> implements Comparable<QualifiedValue> {
-    
-    enum Qualifier {
-        EQUALS('='), 
-        APPROX_EQUALS('~'), 
-        LESS_THAN('<'), 
-        GREATER_THAN('>'),
-        LESS_THAN_OR_EQUALS('<='), 
-        GREATER_THAN_OR_EQUALS('>='),
-        AMBIGUOUS('#') // for use in aggregations where the state is inconsistent
-        
-        String symbol
-        
-        Qualifier(String symbol) {
-            this.symbol = symbol
-        }
-        
-        String getSymbol() {
-            return symbol
-        }
-        
-        static Qualifier create(String symbol) {
-            return Qualifier.values().find {
-                it.symbol == symbol
-            }
-        }
-    }
+class QualifiedNumber<T extends Number> implements Serializable, Comparable<QualifiedNumber> {
      
     T value
     Qualifier qualifier
     
-    QualifiedValue(T v) {
+    QualifiedNumber(T v) {
         this.value = v
         this.qualifier = Qualifier.EQUALS
     }
     
-    QualifiedValue(T v, Qualifier q) {
+    QualifiedNumber(T v, Qualifier q) {
         this.value = v
         this.qualifier = q
     }
     
-    QualifiedValue(T v, String q) {
+    QualifiedNumber(T v, String q) {
         this.value = v
         this.qualifier = Qualifier.create(q)
     }
     
-    QualifiedValue(QualifiedValue qv) {
+    QualifiedNumber(QualifiedNumber qv) {
         this.value = qv.value
         this.qualifier = qq.qualifier
     }
@@ -71,7 +45,7 @@ class QualifiedValue<T extends Number> implements Comparable<QualifiedValue> {
      * @param cls the type to parse the number part to
      * @return The value
      */
-    static QualifiedValue<T> parse(String s, Class<T> cls) {
+    static QualifiedNumber<T> parse(String s, Class<T> cls) {
         def matcher = s =~ /\s*(=|<|>|~|<=|>=)?\s*(\-?[0-9,\.]+)\s*/
         if (matcher.matches()) {
             def q = matcher[0][1]
@@ -85,8 +59,14 @@ class QualifiedValue<T extends Number> implements Comparable<QualifiedValue> {
                 case Integer:
                     num = new Integer(v)
                     break
+                case Long:
+                    num = new Long(v)
+                    break
                 case Double:
                     num = new Double(v)
+                    break
+                case BigDecimal:
+                    num = new BigDecimal(v)
                     break
                 default:
                     throw new IllegalArgumentException("Type $cls.name not supported")
@@ -95,7 +75,7 @@ class QualifiedValue<T extends Number> implements Comparable<QualifiedValue> {
                 if (q != null) {
                     qual = Qualifier.create(q)
                 }
-                return new QualifiedValue(num, qual) 
+                return new QualifiedNumber(num, qual) 
             }
         }
         throw new IllegalArgumentException("Format $s not supported")
@@ -104,12 +84,12 @@ class QualifiedValue<T extends Number> implements Comparable<QualifiedValue> {
     @Override
     boolean equals(Object o) {
         if (o == null) { return false }
-        if (!(o instanceof QualifiedValue)) { return false }
+        if (!(o instanceof QualifiedNumber)) { return false }
         return value.equals(o.value) && qualifier.equals(o.qualifier)
     }
     
     @Override
-    int compareTo(QualifiedValue o) {
+    int compareTo(QualifiedNumber o) {
         return value.compareTo(o.value)
     }
     
@@ -118,14 +98,14 @@ class QualifiedValue<T extends Number> implements Comparable<QualifiedValue> {
        "${qualifier.symbol}$value"
     }
     
-    QualifiedValue plus(QualifiedValue other) {
+    QualifiedNumber plus(QualifiedNumber other) {
         T sum = value + other.value
-        return new QualifiedValue(sum, resolveQualifier(qualifier, other.qualifier))
+        return new QualifiedNumber(sum, resolveQualifier(qualifier, other.qualifier))
     } 
     
-    QualifiedValue minus(QualifiedValue other) {
+    QualifiedNumber minus(QualifiedNumber other) {
         T sum = value - other.value
-        return new QualifiedValue(sum, resolveQualifier(qualifier, other.qualifier))
+        return new QualifiedNumber(sum, resolveQualifier(qualifier, other.qualifier))
     } 
   
     private static Qualifier resolveQualifier(Qualifier a, Qualifier b) {
@@ -140,14 +120,14 @@ class QualifiedValue<T extends Number> implements Comparable<QualifiedValue> {
         }
     }
     
-    QualifiedValue multiply(Number num) {
+    QualifiedNumber multiply(Number num) {
         def result = value * num
-        return new QualifiedValue(result, qualifier)
+        return new QualifiedNumber(result, qualifier)
     }
     
-    QualifiedValue div(Number num) {
+    QualifiedNumber div(Number num) {
         def result = value / num
-        return new QualifiedValue(result, qualifier)
+        return new QualifiedNumber(result, qualifier)
     }
     
 }

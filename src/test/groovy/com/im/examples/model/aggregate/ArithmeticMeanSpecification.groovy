@@ -1,7 +1,7 @@
 package com.im.examples.model.aggregate
 
 import spock.lang.Specification
-import com.im.examples.model.types.QualifiedValue
+import com.im.examples.model.types.QualifiedNumber
 
 class ArithmeticMeanSpecification extends Specification {
     
@@ -43,7 +43,7 @@ class ArithmeticMeanSpecification extends Specification {
 
         when:
         AggregateHolder agg = new AggregateHolder()
-        agg.values = [new QualifiedValue(100.0), new QualifiedValue(200.0), new QualifiedValue(300.0)]
+        agg.values = [new QualifiedNumber(100.0), new QualifiedNumber(200.0), new QualifiedNumber(300.0)]
         agg.createAggregate(new ArithmeticMean())
         
         

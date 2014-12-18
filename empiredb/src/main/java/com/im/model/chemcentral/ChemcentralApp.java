@@ -1,21 +1,15 @@
 package com.im.model.chemcentral;
 
-import org.apache.empire.samples.db.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.List;
 
 import org.apache.empire.commons.StringUtils;
-import org.apache.empire.data.bean.BeanResult;
-import org.apache.empire.db.DBColumnExpr;
 import org.apache.empire.db.DBCommand;
 import org.apache.empire.db.DBDatabaseDriver;
 import org.apache.empire.db.DBReader;
 import org.apache.empire.db.DBRecord;
 import org.apache.empire.db.DBSQLScript;
-import org.apache.empire.db.derby.DBDatabaseDriverDerby;
-import org.apache.empire.db.h2.DBDatabaseDriverH2;
-import org.apache.empire.db.hsql.DBDatabaseDriverHSql;
 import org.apache.empire.db.postgresql.DBDatabaseDriverPostgreSQL;
 import org.apache.empire.xml.XMLWriter;
 import org.slf4j.Logger;

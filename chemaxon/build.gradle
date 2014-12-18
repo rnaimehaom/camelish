@@ -26,7 +26,7 @@ dependencies {
         exclude group:'chemaxonlib',module:'castor-xml'
         exclude group:'chemaxonlib',module:'runtime12'
         exclude group:'chemaxonlib',module:'classes12'
-        exclude group:'postgresql',module:'postgresql'
+        exclude group:'org.postgresql',module:'postgresql'
         exclude group:'org.apache.derby',module:'derby'
         exclude group:'org.apache.derby',module:'derbyclient'
         exclude group:'org.apache.derby',module:'derbynet'

@@ -4,7 +4,7 @@ import javax.sql.DataSource
 import com.im.loaders.Utils
 import com.im.examples.model.aggregate.AggregateHolder
 import com.im.examples.model.aggregate.ArithmeticMean
-import com.im.examples.model.types.QualifiedValue
+import com.im.examples.model.types.QualifiedNumber
 import groovy.transform.Canonical
 import groovy.sql.Sql
 import groovy.json.JsonSlurper
@@ -121,7 +121,7 @@ class ChemcentralSearcher extends Searcher {
                 p.value.data.each { d ->
                     def value = d.value.standard_value
                     agg.values << value
-                    def q = QualifiedValue.Qualifier.create(d.value.standard_relation)
+                    def q = QualifiedNumber.Qualifier.create(d.value.standard_relation)
                 }
                 agg.createAggregate(new ArithmeticMean("Assay $p.key"))
             }

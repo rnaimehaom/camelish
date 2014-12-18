@@ -1,7 +1,7 @@
 package com.im.examples.model.aggregate
 
 import spock.lang.Specification
-import com.im.examples.model.types.QualifiedValue
+import com.im.examples.model.types.QualifiedNumber
 
 class MinSpecification extends Specification {
     
@@ -77,11 +77,11 @@ class MinSpecification extends Specification {
         when:
         AggregateHolder agg = new AggregateHolder()
         agg.values = [
-            new QualifiedValue(370.1f),
-            new QualifiedValue(500.3f),
-            new QualifiedValue(12.1f),
+            new QualifiedNumber(370.1f),
+            new QualifiedNumber(500.3f),
+            new QualifiedNumber(12.1f),
         ]
-        agg.createAggregate(new Min<QualifiedValue>())
+        agg.createAggregate(new Min<QualifiedNumber>())
         
         
         then:

@@ -7,10 +7,9 @@ drop table users.hit_lists;
 create table users.hit_lists (
   id SERIAL PRIMARY KEY,
   username VARCHAR(32) NOT NULL, -- the user who owns the list: needs to handle sharing etc
-  list_name VARCHAR(32) NOT NULL, -- user specified name
-  list_source VARCHAR(200) NOT NULL, -- URL of the datasource
-  created_timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_timestamp TIMESTAMP -- implement trigger or something
+  list_name TEXT NOT NULL, -- user specified name
+  resource VARCHAR(200) NOT NULL, -- URL of the datasource
+  created_timestamp TIMESTAMP NOT NULL DEFAULT NOW()
   );
 
 create table users.hit_list_data (
