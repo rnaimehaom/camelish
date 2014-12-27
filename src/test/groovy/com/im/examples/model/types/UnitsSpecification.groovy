@@ -6,7 +6,17 @@ import static com.im.examples.model.types.Qualifier.*
 
 class UnitsSpecification extends Specification {
     
-    def "test convert"() {
+   def "test convert response"() {
+        expect:
+
+        p == Units.NumericResponse.PERCENT.convertTo(Units.NumericResponse.FRACTION, f)
+        
+        where:
+        f << [0.234, 0.53]
+        p << [23.4, 53.0]
+    }
+    
+    def "test convert molarity"() {
         expect:
 
         mm == Units.Molarity.MOLAR.convertTo(Units.Molarity.MILLI_MOLAR, m)
@@ -18,7 +28,7 @@ class UnitsSpecification extends Specification {
         um << [1234000, 5300000, 56.3]
     }
     
-    def "parse values"() {
+    def "parse molarity values"() {
 
         expect:
         Units.Molarity.parse(values).equals(results)

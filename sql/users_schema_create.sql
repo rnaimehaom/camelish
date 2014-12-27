@@ -6,9 +6,11 @@ drop table users.hit_lists;
 
 create table users.hit_lists (
   id SERIAL PRIMARY KEY,
-  username VARCHAR(32) NOT NULL, -- the user who owns the list: needs to handle sharing etc
-  list_name TEXT NOT NULL, -- user specified name
   resource VARCHAR(200) NOT NULL, -- URL of the datasource
+  list_owner VARCHAR(32) NOT NULL, -- the user who owns the list: needs to handle sharing etc
+  list_name TEXT NOT NULL, -- user specified name
+  list_status VARCHAR(16), -- Pending, OK
+  list_size INTEGER, -- the number of items in the list
   created_timestamp TIMESTAMP NOT NULL DEFAULT NOW()
   );
 
@@ -22,5 +24,3 @@ create table users.hit_list_data (
 
 grant all on all tables in schema users to chemcentral;
 grant all on all sequences in schema users to chemcentral;
-
-  
